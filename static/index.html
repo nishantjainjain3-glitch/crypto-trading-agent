@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crypto Trade Agent — 24/7 Autonomous Workstation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #0b0f19; color: #e2e8f0; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .card { background: #131b2e; border: 1px solid #1e293b; }
+    .neon-emerald { color: #10b981; }
+    .neon-rose { color: #f43f5e; }
+  </style>
+</head>
+<body class="p-4 md:p-8">
+  <div class="max-w-7xl mx-auto space-y-6">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center pb-4 border-b border-slate-800 gap-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+          <span>⚡ Crypto Trade Agent</span>
+          <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">24/7 Active</span>
+          <span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Paper Mode</span>
+        </h1>
+        <p class="text-sm text-slate-400 mt-1">Multi-Agent Liquidity Sweeps, 1% ATR Volatility Sizing, and CCXT Execution</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="runScanIteration()" id="scanBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition">
+          ▶ Run Live Scan Cycle
+        </button>
+        <button onclick="refreshData()" class="card hover:bg-slate-800 text-slate-300 font-medium px-3 py-2 rounded-lg text-sm border border-slate-700 transition">
+          🔄 Refresh
+        </button>
+      </div>
+    </header>
+
+    <!-- Portfolio Metrics Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div class="card p-4 rounded-xl">
+        <span class="text-xs font-medium text-slate-400">Total Equity</span>
+        <div class="text-xl md:text-2xl font-bold text-white mt-1" id="totalEquity">$10,000.00</div>
+        <span class="text-xs text-slate-500">USDT Ledger</span>
+      </div>
+      <div class="card p-4 rounded-xl">
+        <span class="text-xs font-medium text-slate-400">Available Cash</span>
+        <div class="text-xl md:text-2xl font-bold text-white mt-1" id="cashUsdt">$10,000.00</div>
+        <span class="text-xs text-slate-500">Dry Powder</span>
+      </div>
+      <div class="card p-4 rounded-xl">
+        <span class="text-xs font-medium text-slate-400">Realized PnL</span>
+        <div class="text-xl md:text-2xl font-bold mt-1" id="realizedPnl">$0.00</div>
+        <span class="text-xs text-slate-500" id="totalTrades">0 Closed Trades</span>
+      </div>
+      <div class="card p-4 rounded-xl">
+        <span class="text-xs font-medium text-slate-400">Win Rate</span>
+        <div class="text-xl md:text-2xl font-bold text-white mt-1" id="winRate">0.0%</div>
+        <span class="text-xs text-slate-500" id="profitFactor">Profit Factor: 0.0</span>
+      </div>
+      <div class="card p-4 rounded-xl">
+        <span class="text-xs font-medium text-slate-400">Max Drawdown</span>
+        <div class="text-xl md:text-2xl font-bold text-rose-400 mt-1" id="maxDrawdown">0.0%</div>
+        <span class="text-xs text-slate-500">Peak-to-Trough</span>
+      </div>
+    </div>
+
+    <!-- Active Positions -->
+    <div class="card rounded-xl overflow-hidden">
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+        <h2 class="text-base font-semibold text-white">Active Paper Positions (<span id="openCount">0</span>)</h2>
+        <span class="text-xs text-slate-400">1% ATR Risk Limits Enforced</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-900/60 text-slate-400 text-xs uppercase font-medium">
+            <tr>
+              <th class="p-3">Symbol</th>
+              <th class="p-3">Direction</th>
+              <th class="p-3">Entry Price</th>
+              <th class="p-3">Current Price</th>
+              <th class="p-3">Stop Loss</th>
+              <th class="p-3">Target Price</th>
+              <th class="p-3">Allocated</th>
+              <th class="p-3">Unrealized PnL</th>
+            </tr>
+          </thead>
+          <tbody id="positionsTable" class="divide-y divide-slate-800/60">
+            <tr>
+              <td colspan="8" class="p-6 text-center text-slate-500">No active positions. Run a scan to discover setups.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Screener & Backtester Split -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Screener Cards (2 cols) -->
+      <div class="lg:col-span-2 space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-base font-semibold text-white">Crypto Market Screener (Ranked Conviction)</h2>
+          <span class="text-xs text-slate-400">Watchlist of 10 Tier-1 Pairs</span>
+        </div>
+        <div id="screenerList" class="space-y-3">
+          <div class="card p-4 rounded-xl text-center text-slate-500">Loading live crypto analysis...</div>
+        </div>
+      </div>
+
+      <!-- Quantitative Backtester Widget (1 col) -->
+      <div class="space-y-4">
+        <h2 class="text-base font-semibold text-white">Strategy Backtester</h2>
+        <div class="card p-4 rounded-xl space-y-4">
+          <div>
+            <label class="text-xs text-slate-400 font-medium">Pair</label>
+            <select id="btSymbol" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white">
+              <option value="BTC-USD">Bitcoin (BTC/USDT)</option>
+              <option value="ETH-USD">Ethereum (ETH/USDT)</option>
+              <option value="SOL-USD">Solana (SOL/USDT)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 font-medium">Historical Period</label>
+            <select id="btPeriod" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm text-white">
+              <option value="6mo">6 Months</option>
+              <option value="1y" selected>1 Year</option>
+              <option value="2y">2 Years</option>
+            </select>
+          </div>
+          <button onclick="runBacktest()" id="btBtn" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-medium py-2 rounded-lg text-sm transition">
+            Run Quantitative Backtest
+          </button>
+          
+          <div id="btResults" class="hidden border-t border-slate-800 pt-3 space-y-2 text-xs">
+            <div class="flex justify-between"><span class="text-slate-400">Total Return:</span><span id="btReturn" class="font-bold">--</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">Sharpe Ratio:</span><span id="btSharpe" class="font-bold">--</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">Sortino Ratio:</span><span id="btSortino" class="font-bold">--</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">Max Drawdown:</span><span id="btMaxDd" class="font-bold text-rose-400">--</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">VaR (95% Daily):</span><span id="btVar" class="font-bold">--</span></div>
+            <div class="flex justify-between"><span class="text-slate-400">Win Rate:</span><span id="btWinRate" class="font-bold">--</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function refreshData() {
+      try {
+        const [portRes, screenRes] = await Promise.all([
+          fetch('/api/portfolio'),
+          fetch('/api/screener')
+        ]);
+        const port = await portRes.json();
+        const screen = await screenRes.json();
+
+        // Populate Portfolio
+        document.getElementById('totalEquity').innerText = `$${port.total_equity_usdt.toLocaleString()}`;
+        document.getElementById('cashUsdt').innerText = `$${port.cash_usdt.toLocaleString()}`;
+        
+        const rPnl = document.getElementById('realizedPnl');
+        rPnl.innerText = `${port.realized_pnl_usdt >= 0 ? '+' : ''}$${port.realized_pnl_usdt.toFixed(2)}`;
+        rPnl.className = `text-xl md:text-2xl font-bold mt-1 ${port.realized_pnl_usdt >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+        document.getElementById('totalTrades').innerText = `${port.total_trades} Closed Trades`;
+        document.getElementById('winRate').innerText = `${port.win_rate_pct}%`;
+        document.getElementById('profitFactor').innerText = `Profit Factor: ${port.profit_factor}`;
+        document.getElementById('maxDrawdown').innerText = `${port.max_drawdown_pct}%`;
+        document.getElementById('openCount').innerText = port.open_positions_count;
+
+        // Render Positions Table
+        const tbody = document.getElementById('positionsTable');
+        if (port.open_positions.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-500">No active positions.</td></tr>';
+        } else {
+          tbody.innerHTML = port.open_positions.map(p => `
+            <tr class="hover:bg-slate-900/40">
+              <td class="p-3 font-semibold text-white">${p.symbol}</td>
+              <td class="p-3"><span class="px-2 py-0.5 rounded text-xs ${p.direction === 'BUY' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400 border border-rose-800'}">${p.direction}</span></td>
+              <td class="p-3 text-slate-300">$${p.entry_price}</td>
+              <td class="p-3 text-slate-300 font-medium">$${p.current_price}</td>
+              <td class="p-3 text-rose-400">$${p.stop_loss}</td>
+              <td class="p-3 text-emerald-400">$${p.target_price}</td>
+              <td class="p-3 text-slate-400">$${p.allocated_usd}</td>
+              <td class="p-3 font-semibold ${p.unrealized_pnl_usd >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${p.unrealized_pnl_usd >= 0 ? '+' : ''}$${p.unrealized_pnl_usd} (${p.unrealized_pnl_pct}%)</td>
+            </tr>
+          `).join('');
+        }
+
+        // Render Screener Cards
+        const sContainer = document.getElementById('screenerList');
+        if (screen.candidates) {
+          sContainer.innerHTML = screen.candidates.map(c => `
+            <div class="card p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-white text-base">${c.symbol}</span>
+                  <span class="text-xs px-2 py-0.5 rounded ${c.verdict.includes('BUY') ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : (c.verdict.includes('SELL') ? 'bg-rose-950 text-rose-400 border border-rose-800' : 'bg-slate-800 text-slate-400')}">${c.verdict}</span>
+                  <span class="text-xs text-slate-400">Score: <strong class="text-white">${c.conviction_score}/100</strong></span>
+                </div>
+                <div class="text-xs text-slate-400 space-x-3">
+                  <span>RVOL: <strong class="text-slate-200">${c.technicals?.rvol || 1.0}x</strong></span>
+                  <span>RSI: <strong class="text-slate-200">${c.technicals?.rsi || 50}</strong></span>
+                  <span>ATR: <strong class="text-slate-200">$${c.technicals?.atr || 0}</strong></span>
+                </div>
+                <div class="text-xs text-emerald-400 mt-1">${(c.bullish_factors || []).slice(0, 2).join(' • ')}</div>
+              </div>
+              <div class="text-right">
+                <div class="text-lg font-bold text-white">$${c.last_price}</div>
+                <div class="text-xs font-semibold ${c.change_24h_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${c.change_24h_pct >= 0 ? '+' : ''}${c.change_24h_pct}%</div>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Data refresh error:', err);
+      }
+    }
+
+    async function runScanIteration() {
+      const btn = document.getElementById('scanBtn');
+      btn.innerText = 'Scanning...';
+      btn.disabled = true;
+      try {
+        await fetch('/api/runner/step', { method: 'POST' });
+        await refreshData();
+      } catch (e) {
+        alert('Scan iteration error: ' + e);
+      } finally {
+        btn.innerText = '▶ Run Live Scan Cycle';
+        btn.disabled = false;
+      }
+    }
+
+    async function runBacktest() {
+      const btn = document.getElementById('btBtn');
+      const resDiv = document.getElementById('btResults');
+      btn.innerText = 'Backtesting...';
+      btn.disabled = true;
+
+      const symbol = document.getElementById('btSymbol').value;
+      const period = document.getElementById('btPeriod').value;
+
+      try {
+        const res = await fetch('/api/backtest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbol, period })
+        });
+        const m = await res.json();
+        resDiv.classList.remove('hidden');
+        document.getElementById('btReturn').innerText = `${m.total_return_pct >= 0 ? '+' : ''}${m.total_return_pct}%`;
+        document.getElementById('btReturn').className = `font-bold ${m.total_return_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        document.getElementById('btSharpe').innerText = m.sharpe_ratio;
+        document.getElementById('btSortino').innerText = m.sortino_ratio;
+        document.getElementById('btMaxDd').innerText = `-${m.max_drawdown_pct}%`;
+        document.getElementById('btVar').innerText = `-${m.var_95_pct}%`;
+        document.getElementById('btWinRate').innerText = `${m.win_rate_pct}%`;
+      } catch (e) {
+        alert('Backtest failed: ' + e);
+      } finally {
+        btn.innerText = 'Run Quantitative Backtest';
+        btn.disabled = false;
+      }
+    }
+
+    // Initial fetch
+    refreshData();
+    setInterval(refreshData, 10000);
+  </script>
+</body>
+</html>

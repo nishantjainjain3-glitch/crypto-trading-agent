@@ -1,0 +1,14 @@
+{
+  "initial_capital_usdt": 10000.0,
+  "virtual_cash_usdt": 10000.0,
+  "realized_pnl_usdt": 0.0,
+  "total_fees_usdt": 0.0,
+  "total_trades": 0,
+  "winning_trades": 0,
+  "losing_trades": 0,
+  "win_rate_pct": 0.0,
+  "profit_factor": 0.0,
+  "peak_equity_usdt": 10000.0,
+  "max_drawdown_pct": 0.0,
+  "last_updated": "2026-09-23T20:07:45.002735"
+}

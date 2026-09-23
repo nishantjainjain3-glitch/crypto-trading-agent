@@ -1,0 +1,154 @@
+"""Continuous 24/7 crypto scanning and paper trading runner."""
+
+import time
+import logging
+from typing import Dict, Any, List, Optional
+from src.exchanges.ccxt_client import CryptoExchangeClient
+from src.analysis.crypto_scanner import CryptoScanner, DEFAULT_WATCHLIST
+from src.engine.position_sizer import PositionSizer
+from src.engine.crypto_gatekeeper import CryptoTradeGatekeeper
+from src.engine.crypto_paper_trader import CryptoPaperTrader
+from src.notifications.telegram import TelegramNotifier
+
+logger = logging.getLogger(__name__)
+
+class ContinuousCryptoRunner:
+    """Orchestrates 24/7 crypto scanning, gatekeeper validation, and execution."""
+
+    def __init__(
+        self,
+        watchlist: Optional[List[str]] = None,
+        data_dir: str = "data",
+    ):
+        self.watchlist = watchlist or DEFAULT_WATCHLIST
+        self.client = CryptoExchangeClient()
+        self.scanner = CryptoScanner(exchange_client=self.client, watchlist=self.watchlist)
+        self.paper_trader = CryptoPaperTrader(data_dir=data_dir)
+        self.gatekeeper = CryptoTradeGatekeeper()
+        self.position_sizer = PositionSizer()
+        self.notifier = TelegramNotifier()
+        self.is_running = False
+
+    def run_single_iteration(self) -> Dict[str, Any]:
+        """Execute a single complete scan, management, and execution cycle."""
+        iteration_log = {
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "closed_trades": [],
+            "new_trades": [],
+            "vetoed_candidates": [],
+        }
+
+        # Step 1: Fetch current market prices for active positions and watchlist
+        active_symbols = list(self.paper_trader.positions.keys())
+        symbols_to_price = list(set(self.watchlist + active_symbols))
+        current_prices = {}
+
+        for sym in symbols_to_price:
+            try:
+                t = self.client.fetch_ticker(sym)
+                if t.get("last_price", 0) > 0:
+                    current_prices[sym] = t["last_price"]
+            except Exception as e:
+                logger.error(f"Error fetching ticker for {sym}: {e}")
+
+        # Step 2: Update existing positions (trailing stop, targets, stops)
+        closed = self.paper_trader.update_positions(current_prices)
+        iteration_log["closed_trades"] = closed
+        for trade in closed:
+            msg = (
+                f"🚨 *Crypto Trade Closed*\n"
+                f"Symbol: `{trade['symbol']}`\n"
+                f"Exit Price: `${trade['exit_price']}`\n"
+                f"Net PnL: `${trade['net_pnl_usd']}` ({trade['pnl_pct']}%)\n"
+                f"Reason: {trade['exit_reason']}"
+            )
+            self.notifier.send_message(msg)
+
+        # Step 3: Run full scanner on watchlist
+        candidates = self.scanner.scan_all()
+
+        # Step 4: Evaluate candidates through gatekeeper
+        ledger_summary = self.paper_trader.get_portfolio_summary(current_prices)
+        current_equity = ledger_summary["total_equity_usdt"]
+        daily_pnl = ledger_summary["realized_pnl_usdt"]
+
+        for cand in candidates:
+            symbol = cand["symbol"]
+            score = cand["conviction_score"]
+            technicals = cand.get("technicals", {})
+            sweep = cand.get("liquidity_sweep")
+
+            # Only consider high conviction setups (Score >= 70 or confirmed sweep)
+            if score < 70 and not sweep:
+                continue
+
+            direction = "BUY"
+            if sweep and sweep.get("direction") == "SELL":
+                direction = "SELL"
+
+            entry_price = cand["last_price"]
+            atr = technicals.get("atr", entry_price * 0.02)
+            
+            if sweep:
+                stop_loss = sweep["stop_loss"]
+                target_price = sweep["target_price"]
+            else:
+                stop_loss = round(entry_price - (1.5 * atr), 4) if direction == "BUY" else round(entry_price + (1.5 * atr), 4)
+                target_price = round(entry_price + (3.0 * atr), 4) if direction == "BUY" else round(entry_price - (3.0 * atr), 4)
+
+            # Pass through gatekeeper
+            passed, verdict, veto_reasons = self.gatekeeper.evaluate_candidate(
+                symbol=symbol,
+                direction=direction,
+                entry_price=entry_price,
+                stop_loss=stop_loss,
+                target_price=target_price,
+                technicals=technicals,
+                active_positions=self.paper_trader.positions,
+                daily_pnl_usd=daily_pnl,
+                is_liquidity_sweep=(sweep is not None),
+            )
+
+            if not passed:
+                iteration_log["vetoed_candidates"].append({
+                    "symbol": symbol,
+                    "reasons": veto_reasons,
+                })
+                continue
+
+            # Compute position size
+            size_info = self.position_sizer.calculate_size(
+                symbol=symbol,
+                entry_price=entry_price,
+                stop_loss=stop_loss,
+                atr=atr,
+                current_equity=current_equity,
+            )
+
+            try:
+                pos = self.paper_trader.open_position(
+                    symbol=symbol,
+                    direction=direction,
+                    entry_price=entry_price,
+                    quantity=size_info["quantity"],
+                    stop_loss=stop_loss,
+                    target_price=target_price,
+                    atr=atr,
+                    rationale=f"Score {score}/100 | ATR Sized | {cand['verdict']}",
+                )
+                iteration_log["new_trades"].append(pos)
+
+                msg = (
+                    f"⚡ *New Crypto Position Opened*\n"
+                    f"Pair: `{symbol}` ({direction})\n"
+                    f"Entry: `${entry_price}`\n"
+                    f"Stop Loss: `${stop_loss}`\n"
+                    f"Target: `${target_price}`\n"
+                    f"Allocated: `${size_info['allocated_capital_usd']} USDT`\n"
+                    f"Conviction: {score}/100"
+                )
+                self.notifier.send_message(msg)
+            except Exception as e:
+                logger.error(f"Failed opening position for {symbol}: {e}")
+
+        return iteration_log
