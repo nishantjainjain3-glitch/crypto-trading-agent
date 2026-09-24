@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  crypto-bot:
+    build: .
+    container_name: crypto-trading-agent
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/portfolio"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
