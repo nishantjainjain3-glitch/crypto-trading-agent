@@ -1,1 +1,20 @@
-{}
+{
+  "DOGE/USDT": {
+    "symbol": "DOGE/USDT",
+    "direction": "BUY",
+    "entry_price": 0.0942,
+    "quantity": 88.0,
+    "allocated_usd": 8.29,
+    "stop_loss": 0.0932,
+    "initial_stop_loss": 0.0932,
+    "target_price": 0.0963,
+    "atr": 0.0007,
+    "highest_price": 0.09481,
+    "lowest_price": 0.0942,
+    "breakeven_triggered": false,
+    "trailing_stop_triggered": false,
+    "entry_time": "2026-09-24 20:20:48 UTC",
+    "entry_fee_usd": 0.0062,
+    "rationale": "Score 75/100 | LIVE BROKER | STRONG_BUY"
+  }
+}
