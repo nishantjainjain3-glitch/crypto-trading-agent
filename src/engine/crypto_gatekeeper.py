@@ -1,10 +1,11 @@
-"""Adversarial trade gatekeeper enforcing multi-tier safety checks before execution."""
-
+import os
 import logging
 from typing import Dict, Any, List, Tuple, Optional
+from dotenv import load_dotenv
 
 from src.analysis.regime_service import get_current_regime
 
+load_dotenv()
 logger = logging.getLogger(__name__)
 
 class CryptoTradeGatekeeper:
@@ -16,15 +17,15 @@ class CryptoTradeGatekeeper:
 
     def __init__(
         self,
-        min_reward_to_risk: float = 1.5,
-        min_rvol: float = 1.2,
-        max_concurrent_positions: int = 3,
-        daily_loss_limit_usd: float = 500.0,
+        min_reward_to_risk: Optional[float] = None,
+        min_rvol: Optional[float] = None,
+        max_concurrent_positions: Optional[int] = None,
+        daily_loss_limit_usd: Optional[float] = None,
     ):
-        self.min_reward_to_risk = float(min_reward_to_risk)
-        self.min_rvol = float(min_rvol)
-        self.max_concurrent_positions = int(max_concurrent_positions)
-        self.daily_loss_limit_usd = float(daily_loss_limit_usd)
+        self.min_reward_to_risk = float(min_reward_to_risk if min_reward_to_risk is not None else os.getenv("MIN_REWARD_TO_RISK", 1.5))
+        self.min_rvol = float(min_rvol if min_rvol is not None else os.getenv("MIN_RVOL_RATIO", 1.2))
+        self.max_concurrent_positions = int(max_concurrent_positions if max_concurrent_positions is not None else os.getenv("MAX_CONCURRENT_POSITIONS", 1))
+        self.daily_loss_limit_usd = float(daily_loss_limit_usd if daily_loss_limit_usd is not None else os.getenv("DAILY_LOSS_LIMIT_USDT", 2.0))
 
     def evaluate_candidate(
         self,

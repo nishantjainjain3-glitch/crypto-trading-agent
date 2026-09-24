@@ -1,8 +1,10 @@
-"""Continuous 24/7 crypto scanning and paper trading runner."""
-
+import os
 import time
 import logging
 from typing import Dict, Any, List, Optional
+from dotenv import load_dotenv
+
+load_dotenv()
 from src.exchanges.ccxt_client import CryptoExchangeClient
 from src.analysis.crypto_scanner import CryptoScanner, DEFAULT_WATCHLIST
 from src.engine.position_sizer import PositionSizer
@@ -27,7 +29,19 @@ class ContinuousCryptoRunner:
         self.gatekeeper = CryptoTradeGatekeeper()
         self.position_sizer = PositionSizer()
         self.notifier = TelegramNotifier()
-        self.is_running = False
+        self.is_live = os.getenv("LIVE_EXECUTION_ENABLED", "false").lower() == "true"
+        if self.is_live and self.client.exchange:
+            try:
+                bal = self.client.exchange.fetch_balance()
+                live_cash = bal.get("free", {}).get("USDT", 0.0)
+                if len(self.paper_trader.positions) == 0:
+                    self.paper_trader.ledger["virtual_cash_usdt"] = live_cash
+                    if self.paper_trader.ledger.get("initial_capital_usdt", 0) <= 1.0:
+                        self.paper_trader.ledger["initial_capital_usdt"] = live_cash
+                    self.paper_trader._save_ledger()
+                    logger.info(f"Synchronized ledger with Binance free cash: ${live_cash:.2f} USDT")
+            except Exception as e:
+                logger.error(f"Failed syncing live cash to ledger: {e}")
 
     def run_single_iteration(self) -> Dict[str, Any]:
         """Execute a single complete scan, management, and execution cycle."""
@@ -55,6 +69,19 @@ class ContinuousCryptoRunner:
         closed = self.paper_trader.update_positions(current_prices)
         iteration_log["closed_trades"] = closed
         for trade in closed:
+            if self.is_live and trade.get("direction") == "BUY":
+                try:
+                    base_currency = trade["symbol"].split("/")[0]
+                    bal = self.client.exchange.fetch_balance()
+                    avail = bal.get("free", {}).get(base_currency, 0.0)
+                    sell_qty = min(trade["quantity"], avail)
+                    formatted_qty = self.client.exchange.amount_to_precision(trade["symbol"], sell_qty)
+                    logger.info(f"Placing LIVE Binance Market Sell to close {trade['symbol']} for {formatted_qty}")
+                    sell_order = self.client.create_market_sell(trade["symbol"], float(formatted_qty))
+                    logger.info(f"Binance exit order filled! Order ID: {sell_order.get('id')}")
+                except Exception as e:
+                    logger.error(f"Failed to execute live exit on Binance for {trade['symbol']}: {e}")
+
             msg = (
                 f"🚨 *Crypto Trade Closed*\n"
                 f"Symbol: `{trade['symbol']}`\n"
@@ -85,6 +112,11 @@ class ContinuousCryptoRunner:
             direction = "BUY"
             if sweep and sweep.get("direction") == "SELL":
                 direction = "SELL"
+
+            # Spot trading only allows opening BUY positions
+            if self.is_live and direction != "BUY":
+                logger.debug(f"Skipping short setup {symbol} because Binance spot cannot short.")
+                continue
 
             entry_price = cand["last_price"]
             atr = technicals.get("atr", entry_price * 0.02)
@@ -125,26 +157,55 @@ class ContinuousCryptoRunner:
                 current_equity=current_equity,
             )
 
+            if self.is_live:
+                try:
+                    bal = self.client.exchange.fetch_balance()
+                    live_cash = bal.get("free", {}).get("USDT", 0.0)
+                    if live_cash < 5.0:
+                        logger.warning(f"Live cash ${live_cash:.2f} is below $5.00 minNotional. Skipping live buy.")
+                        continue
+                    # For small accounts, allocate 92% of available cash to leave buffer for fees and slippage
+                    alloc = min(live_cash * 0.92, size_info.get("allocated_capital_usd", live_cash * 0.92))
+                    if alloc < 5.05:
+                        alloc = 5.05
+                    raw_qty = alloc / entry_price
+                    formatted_qty = self.client.exchange.amount_to_precision(symbol, raw_qty)
+                    qty = float(formatted_qty)
+                    if (qty * entry_price) < 5.0:
+                        logger.warning(f"Calculated notional ${(qty * entry_price):.2f} below $5.00 minNotional. Skipping.")
+                        continue
+                except Exception as e:
+                    logger.error(f"Error sizing live order: {e}")
+                    qty = size_info["quantity"]
+            else:
+                qty = size_info["quantity"]
+
             try:
+                # Live order execution on Binance
+                if self.is_live:
+                    logger.info(f"Placing LIVE Binance Market Buy on {symbol} for {qty}")
+                    live_order = self.client.create_market_buy(symbol, qty)
+                    logger.info(f"Binance order filled! Order ID: {live_order.get('id')}")
+
                 pos = self.paper_trader.open_position(
                     symbol=symbol,
                     direction=direction,
                     entry_price=entry_price,
-                    quantity=size_info["quantity"],
+                    quantity=qty,
                     stop_loss=stop_loss,
                     target_price=target_price,
                     atr=atr,
-                    rationale=f"Score {score}/100 | ATR Sized | {cand['verdict']}",
+                    rationale=f"Score {score}/100 | {'LIVE BROKER' if self.is_live else 'PAPER'} | {cand['verdict']}",
                 )
                 iteration_log["new_trades"].append(pos)
 
                 msg = (
-                    f"⚡ *New Crypto Position Opened*\n"
+                    f"⚡ *New Crypto Position Opened ({'LIVE' if self.is_live else 'PAPER'})*\n"
                     f"Pair: `{symbol}` ({direction})\n"
                     f"Entry: `${entry_price}`\n"
                     f"Stop Loss: `${stop_loss}`\n"
                     f"Target: `${target_price}`\n"
-                    f"Allocated: `${size_info['allocated_capital_usd']} USDT`\n"
+                    f"Quantity: `{qty}`\n"
                     f"Conviction: {score}/100"
                 )
                 self.notifier.send_message(msg)

@@ -47,6 +47,8 @@ def get_portfolio():
             prices[s] = t["last_price"]
 
     summary = paper_trader.get_portfolio_summary(prices)
+    summary["live_execution_enabled"] = os.getenv("LIVE_EXECUTION_ENABLED", "false").lower() == "true"
+    summary["exchange_id"] = exchange_client.exchange_id
     return summary
 
 @app.get("/api/screener")
@@ -88,3 +90,21 @@ def trigger_runner_step():
     """Run a single scanning and position management iteration."""
     log = runner.run_single_iteration()
     return {"status": "SUCCESS", "log": log}
+
+import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
+
+async def background_runner_loop():
+    """Autonomous 24/7 background loop running market scans and position checks."""
+    while True:
+        try:
+            runner.run_single_iteration()
+        except Exception as e:
+            logger.error(f"Error in background runner: {e}")
+        await asyncio.sleep(60)
+
+@app.on_event("startup")
+async def start_autonomous_runner():
+    asyncio.create_task(background_runner_loop())

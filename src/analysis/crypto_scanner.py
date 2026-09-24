@@ -34,10 +34,10 @@ class CryptoScanner:
         self.client = exchange_client or CryptoExchangeClient()
         self.watchlist = watchlist or DEFAULT_WATCHLIST
 
-    def scan_symbol(self, symbol: str) -> Dict[str, Any]:
+    def scan_symbol(self, symbol: str, timeframe: str = "15m") -> Dict[str, Any]:
         """Perform comprehensive technical and liquidity scan for a single symbol."""
         ticker = self.client.fetch_ticker(symbol)
-        df = self.client.fetch_ohlcv(symbol, timeframe="1h", limit=100)
+        df = self.client.fetch_ohlcv(symbol, timeframe=timeframe, limit=100)
         
         technicals = compute_all_technicals(df) if not df.empty else {}
         sweep_signal = detect_liquidity_sweep(df) if not df.empty else None
@@ -99,12 +99,12 @@ class CryptoScanner:
             "bearish_factors": bearish_factors,
         }
 
-    def scan_all(self, output_file: Optional[str] = None) -> List[Dict[str, Any]]:
+    def scan_all(self, timeframe: str = "15m", output_file: Optional[str] = None) -> List[Dict[str, Any]]:
         """Scan all symbols in the watchlist and sort by conviction score."""
         results = []
         for symbol in self.watchlist:
             try:
-                res = self.scan_symbol(symbol)
+                res = self.scan_symbol(symbol, timeframe=timeframe)
                 results.append(res)
             except Exception as e:
                 logger.error(f"Error scanning {symbol}: {e}")

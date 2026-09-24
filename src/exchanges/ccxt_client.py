@@ -1,12 +1,12 @@
-"""Unified CCXT exchange client for crypto market data and order simulation."""
-
 import os
 import time
 import logging
 from typing import Dict, List, Optional, Any
+from dotenv import load_dotenv
 import pandas as pd
 import numpy as np
 
+load_dotenv()
 logger = logging.getLogger(__name__)
 
 class CryptoExchangeClient:
@@ -230,3 +230,41 @@ class CryptoExchangeClient:
             "spread": round(p * 0.001, 4),
             "spread_bps": 10.0,
         }
+
+    def create_market_sell(self, symbol: str, amount: float) -> Dict[str, Any]:
+        """Execute a market SELL order on Binance."""
+        if not self.exchange:
+            raise RuntimeError("Exchange client not initialized")
+        clean_symbol = symbol.replace("-", "/").upper()
+        if "/" not in clean_symbol:
+            clean_symbol = f"{clean_symbol}/USDT"
+
+        self.exchange.load_markets()
+        formatted_amount = self.exchange.amount_to_precision(clean_symbol, amount)
+        logger.info(f"Executing LIVE MARKET SELL on {clean_symbol}: {formatted_amount}")
+        order = self.exchange.create_order(
+            symbol=clean_symbol,
+            type="market",
+            side="sell",
+            amount=float(formatted_amount),
+        )
+        return order
+
+    def create_market_buy(self, symbol: str, amount: float) -> Dict[str, Any]:
+        """Execute a market BUY order on Binance."""
+        if not self.exchange:
+            raise RuntimeError("Exchange client not initialized")
+        clean_symbol = symbol.replace("-", "/").upper()
+        if "/" not in clean_symbol:
+            clean_symbol = f"{clean_symbol}/USDT"
+
+        self.exchange.load_markets()
+        formatted_amount = self.exchange.amount_to_precision(clean_symbol, amount)
+        logger.info(f"Executing LIVE MARKET BUY on {clean_symbol}: {formatted_amount}")
+        order = self.exchange.create_order(
+            symbol=clean_symbol,
+            type="market",
+            side="buy",
+            amount=float(formatted_amount),
+        )
+        return order

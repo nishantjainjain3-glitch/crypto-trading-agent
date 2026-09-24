@@ -18,12 +18,14 @@ class CryptoPaperTrader:
     def __init__(
         self,
         data_dir: str = "data",
-        initial_capital_usdt: float = 10000.0,
+        initial_capital_usdt: Optional[float] = None,
         taker_fee_pct: float = 0.075,
         slippage_pct: float = 0.02,
     ):
         self.data_dir = data_dir
         os.makedirs(self.data_dir, exist_ok=True)
+        if initial_capital_usdt is None:
+            initial_capital_usdt = float(os.getenv("PAPER_CAPITAL_USDT", "9.27"))
         self.initial_capital = float(initial_capital_usdt)
         self.taker_fee_pct = float(taker_fee_pct)
         self.slippage_pct = float(slippage_pct)

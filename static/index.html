@@ -20,7 +20,7 @@
         <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
           <span>⚡ Crypto Trade Agent</span>
           <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">24/7 Active</span>
-          <span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Paper Mode</span>
+          <span id="modeBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Connecting...</span>
         </h1>
         <p class="text-sm text-slate-400 mt-1">Multi-Agent Liquidity Sweeps, 1% ATR Volatility Sizing, and CCXT Execution</p>
       </div>
@@ -193,7 +193,18 @@
           document.getElementById('regimeMom').innerText = (regime.momentum || '').slice(0, 30);
         }
 
-        // Populate Portfolio
+        // Populate Portfolio & Mode
+        const modeBadge = document.getElementById('modeBadge');
+        if (modeBadge) {
+          if (port.live_execution_enabled) {
+            modeBadge.innerText = '🟢 Live Binance Spot';
+            modeBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 font-semibold';
+          } else {
+            modeBadge.innerText = 'Paper Mode';
+            modeBadge.className = 'text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700';
+          }
+        }
+
         document.getElementById('totalEquity').innerText = `$${port.total_equity_usdt.toLocaleString()}`;
         document.getElementById('cashUsdt').innerText = `$${port.cash_usdt.toLocaleString()}`;
         
