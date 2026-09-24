@@ -160,7 +160,16 @@
             <div class="flex justify-between"><span class="text-slate-400">Win Rate:</span><span id="btWinRate" class="font-bold">--</span></div>
           </div>
         </div>
+    <!-- Autonomous Execution Logs Console -->
+    <div class="card p-4 rounded-xl">
+      <div class="flex justify-between items-center mb-2">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <h2 class="text-sm font-semibold text-white">24/7 Autonomous Agent Console Logs</h2>
+        </div>
+        <span class="text-xs text-slate-500">Auto-Polling Every 5s</span>
       </div>
+      <div id="logConsole" class="bg-black/70 rounded-lg p-3 font-mono text-xs text-emerald-400/90 h-48 overflow-y-auto whitespace-pre-wrap border border-slate-800">Loading autonomous agent logs...</div>
     </div>
   </div>
 
@@ -314,9 +323,25 @@
       }
     }
 
-    // Initial fetch
+    async function refreshLogs() {
+      try {
+        const res = await fetch('/api/logs?limit=50');
+        const data = await res.json();
+        const el = document.getElementById('logConsole');
+        if (el && data.lines && data.lines.length > 0) {
+          el.innerText = data.lines.join('');
+          el.scrollTop = el.scrollHeight;
+        }
+      } catch (e) {
+        console.error('Error fetching logs:', e);
+      }
+    }
+
+    // Initial fetch & recurring polling
     refreshData();
+    refreshLogs();
     setInterval(refreshData, 10000);
+    setInterval(refreshLogs, 4000);
   </script>
 </body>
 </html>

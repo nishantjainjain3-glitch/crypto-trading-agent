@@ -85,6 +85,19 @@ def run_backtest(req: BacktestRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/logs")
+def get_logs(limit: int = 100):
+    """Fetch recent execution log lines."""
+    log_file = "data/trading_agent.log"
+    if not os.path.exists(log_file):
+        return {"lines": []}
+    try:
+        with open(log_file, "r", encoding="utf-8", errors="replace") as f:
+            lines = f.readlines()
+            return {"lines": lines[-limit:]}
+    except Exception as e:
+        return {"error": str(e), "lines": []}
+
 @app.post("/api/runner/step")
 def trigger_runner_step():
     """Run a single scanning and position management iteration."""
