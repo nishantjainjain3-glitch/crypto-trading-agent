@@ -145,3 +145,7 @@ class CryptoScanner:
                 logger.error(f"Error scanning {symbol}: {e}")
         results.sort(key=lambda x: x["conviction_score"], reverse=True)
         return results
+
+    def scan_all(self, timeframe: str = "15m") -> List[Dict[str, Any]]:
+        """Alias for scan_watchlist for backwards compatibility."""
+        return self.scan_watchlist(timeframe=timeframe)
