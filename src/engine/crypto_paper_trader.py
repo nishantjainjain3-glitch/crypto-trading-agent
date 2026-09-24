@@ -4,8 +4,10 @@ import os
 import json
 import time
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
+from src.engine.protections import CryptoProtectionManager
+from src.engine.exit_manager import evaluate_minimal_roi_exit
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +23,11 @@ class CryptoPaperTrader:
         initial_capital_usdt: Optional[float] = None,
         taker_fee_pct: float = 0.075,
         slippage_pct: float = 0.02,
+        protection_manager: Optional[CryptoProtectionManager] = None,
     ):
         self.data_dir = data_dir
         os.makedirs(self.data_dir, exist_ok=True)
+        self.protections = protection_manager or CryptoProtectionManager()
         if initial_capital_usdt is None:
             initial_capital_usdt = float(os.getenv("PAPER_CAPITAL_USDT", "9.27"))
         self.initial_capital = float(initial_capital_usdt)
@@ -176,8 +180,25 @@ class CryptoPaperTrader:
                         pos["stop_loss"] = trail_level
                         pos["trailing_stop_triggered"] = True
 
+                # Check Decaying Minimal ROI Target Hit
+                entry_time_str = pos.get("entry_time")
+                holding_hours = 0.0
+                if entry_time_str:
+                    try:
+                        clean_time = entry_time_str.replace(" UTC", "")
+                        dt_entry = datetime.fromisoformat(clean_time)
+                        if dt_entry.tzinfo is None:
+                            dt_entry = dt_entry.replace(tzinfo=timezone.utc)
+                        holding_hours = max(0.0, (datetime.now(timezone.utc) - dt_entry).total_seconds() / 3600.0)
+                    except Exception:
+                        pass
+
+                roi_eval = evaluate_minimal_roi_exit(entry_p, current_price, holding_hours)
+                if roi_eval.get("should_exit", False):
+                    closed = self.close_position(symbol, current_price, "DECAYING_ROI_TARGET_REACHED")
+                    closed_trades.append(closed)
                 # Check Stop Loss Hit
-                if current_price <= pos["stop_loss"]:
+                elif current_price <= pos["stop_loss"]:
                     closed = self.close_position(symbol, current_price, "STOP_LOSS_HIT")
                     closed_trades.append(closed)
                 # Check Target Hit
@@ -245,6 +266,9 @@ class CryptoPaperTrader:
             self.ledger["winning_trades"] += 1
         else:
             self.ledger["losing_trades"] += 1
+
+        if reason == "STOP_LOSS_HIT":
+            self.protections.record_stoploss_hit(symbol, actual_exit_p, pnl_pct)
 
         total_t = self.ledger["total_trades"]
         self.ledger["win_rate_pct"] = round((self.ledger["winning_trades"] / total_t) * 100, 2) if total_t else 0.0

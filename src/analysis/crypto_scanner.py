@@ -7,6 +7,8 @@ from typing import List, Dict, Any, Optional
 from src.exchanges.ccxt_client import CryptoExchangeClient
 from src.analysis.technical_indicators import compute_all_technicals
 from src.analysis.liquidity_sweep import detect_liquidity_sweep
+from src.analysis.order_flow import analyze_order_flow
+from src.analysis.order_book_depth import analyze_order_book_depth
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +25,9 @@ DEFAULT_WATCHLIST = [
     "SUI/USDT",
 ]
 
+
 class CryptoScanner:
-    """Scans crypto universe and outputs actionable ranked opportunities."""
+    """Scans crypto universe with EMAs, RSI, RVOL, Liquidity Sweeps, Wyckoff VSA, CVD, and L2 Order Book Depth."""
 
     def __init__(
         self,
@@ -35,24 +38,26 @@ class CryptoScanner:
         self.watchlist = watchlist or DEFAULT_WATCHLIST
 
     def scan_symbol(self, symbol: str, timeframe: str = "15m") -> Dict[str, Any]:
-        """Perform comprehensive technical and liquidity scan for a single symbol."""
+        """Perform comprehensive technical, order flow, and order book scan for a single symbol."""
         ticker = self.client.fetch_ticker(symbol)
         df = self.client.fetch_ohlcv(symbol, timeframe=timeframe, limit=100)
-        
+
         technicals = compute_all_technicals(df) if not df.empty else {}
         sweep_signal = detect_liquidity_sweep(df) if not df.empty else None
-        
-        # Calculate conviction score (0-100)
+        order_flow = analyze_order_flow(df) if not df.empty else {}
+        order_book = analyze_order_book_depth(self.client, symbol, limit=20)
+
+        # Base conviction score (0-100)
         score = 50
         bullish_factors = []
         bearish_factors = []
-        
+
         if technicals:
             if technicals.get("above_20_ema") and technicals.get("above_50_ema"):
-                score += 15
+                score += 10
                 bullish_factors.append("Price above 20 & 50 EMA (Momentum Uptrend)")
             elif not technicals.get("above_20_ema") and not technicals.get("above_50_ema"):
-                score -= 15
+                score -= 10
                 bearish_factors.append("Price below 20 & 50 EMA (Downtrend)")
 
             rsi = technicals.get("rsi", 50)
@@ -76,14 +81,42 @@ class CryptoScanner:
 
         if sweep_signal:
             if sweep_signal["direction"] == "BUY":
-                score += 20
+                score += 15
                 bullish_factors.append(sweep_signal["rationale"])
             elif sweep_signal["direction"] == "SELL":
-                score -= 20
+                score -= 15
                 bearish_factors.append(sweep_signal["rationale"])
 
+        # Order Flow & Smart Money Confluence
+        if order_flow:
+            of_verdict = order_flow.get("verdict", "NEUTRAL")
+            if of_verdict in ["STRONG_ACCUMULATION", "ACCUMULATION"]:
+                score += 10
+                bullish_factors.append(f"Smart Money Order Flow: {of_verdict} (Score: {order_flow.get('order_flow_score')})")
+            elif of_verdict in ["STRONG_DISTRIBUTION", "DISTRIBUTION"]:
+                score -= 10
+                bearish_factors.append(f"Smart Money Order Flow: {of_verdict} (Score: {order_flow.get('order_flow_score')})")
+
+        # L2 Order Book Depth Confluence
+        if order_book and order_book.get("available", False):
+            imb = order_book.get("imbalance_ratio", 1.0)
+            if imb >= 1.5:
+                score += 5
+                bullish_factors.append(f"Order book bid absorption (Imbalance: {imb:.2f})")
+            elif imb < 0.67:
+                score -= 5
+                bearish_factors.append(f"Order book ask resistance (Imbalance: {imb:.2f})")
+
+            for v in order_book.get("violations", []):
+                score -= 10
+                bearish_factors.append(f"Order book depth warning: {v}")
+
         score = max(5, min(95, score))
-        verdict = "STRONG_BUY" if score >= 75 else ("BUY" if score >= 60 else ("STRONG_SELL" if score <= 25 else ("SELL" if score <= 40 else "NEUTRAL")))
+        verdict = (
+            "STRONG_BUY"
+            if score >= 75
+            else ("BUY" if score >= 60 else ("STRONG_SELL" if score <= 25 else ("SELL" if score <= 40 else "NEUTRAL")))
+        )
 
         return {
             "symbol": symbol,
@@ -95,12 +128,14 @@ class CryptoScanner:
             "verdict": verdict,
             "technicals": technicals,
             "liquidity_sweep": sweep_signal,
+            "order_flow": order_flow,
+            "order_book": order_book,
             "bullish_factors": bullish_factors,
             "bearish_factors": bearish_factors,
         }
 
-    def scan_all(self, timeframe: str = "15m", output_file: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Scan all symbols in the watchlist and sort by conviction score."""
+    def scan_watchlist(self, timeframe: str = "15m") -> List[Dict[str, Any]]:
+        """Scan entire watchlist and return opportunities sorted by conviction."""
         results = []
         for symbol in self.watchlist:
             try:
@@ -108,12 +143,5 @@ class CryptoScanner:
                 results.append(res)
             except Exception as e:
                 logger.error(f"Error scanning {symbol}: {e}")
-                
         results.sort(key=lambda x: x["conviction_score"], reverse=True)
-
-        if output_file:
-            os.makedirs(os.path.dirname(output_file), exist_ok=True)
-            with open(output_file, "w") as f:
-                json.dump(results, f, indent=2)
-
         return results

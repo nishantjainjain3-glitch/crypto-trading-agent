@@ -4,15 +4,20 @@ from typing import Dict, Any, List, Tuple, Optional
 from dotenv import load_dotenv
 
 from src.analysis.regime_service import get_current_regime
+from src.engine.protections import CryptoProtectionManager
 
 load_dotenv()
 logger = logging.getLogger(__name__)
 
+
 class CryptoTradeGatekeeper:
     """
     Deterministic gatekeeper that audits candidate trade setups.
-    
-    Any failed gate results in an immediate VETO with a documented reason.
+    Enforces risk/reward, RVOL, 20 EMA trend, RSI limits, and Freqtrade-style protections:
+    - Cooldown / StoplossGuard (stops whipsawing)
+    - MaxDrawdownGuard (caps portfolio drawdown at 5%)
+    - Order book depth & spread filter (rejects high-slippage or heavy sell walls)
+    - Candle health (anti-falling knife, anti-chase)
     """
 
     def __init__(
@@ -21,11 +26,13 @@ class CryptoTradeGatekeeper:
         min_rvol: Optional[float] = None,
         max_concurrent_positions: Optional[int] = None,
         daily_loss_limit_usd: Optional[float] = None,
+        protection_manager: Optional[CryptoProtectionManager] = None,
     ):
         self.min_reward_to_risk = float(min_reward_to_risk if min_reward_to_risk is not None else os.getenv("MIN_REWARD_TO_RISK", 1.5))
         self.min_rvol = float(min_rvol if min_rvol is not None else os.getenv("MIN_RVOL_RATIO", 1.2))
         self.max_concurrent_positions = int(max_concurrent_positions if max_concurrent_positions is not None else os.getenv("MAX_CONCURRENT_POSITIONS", 1))
         self.daily_loss_limit_usd = float(daily_loss_limit_usd if daily_loss_limit_usd is not None else os.getenv("DAILY_LOSS_LIMIT_USDT", 2.0))
+        self.protections = protection_manager or CryptoProtectionManager()
 
     def evaluate_candidate(
         self,
@@ -39,6 +46,10 @@ class CryptoTradeGatekeeper:
         daily_pnl_usd: float,
         is_liquidity_sweep: bool = False,
         regime_info: Optional[Dict[str, Any]] = None,
+        current_equity: float = 9.27,
+        peak_equity: float = 9.27,
+        order_book_analysis: Optional[Dict[str, Any]] = None,
+        candle_health: Optional[Dict[str, Any]] = None,
     ) -> Tuple[bool, str, List[str]]:
         """
         Evaluate candidate setup against all safety gates.
@@ -53,11 +64,17 @@ class CryptoTradeGatekeeper:
                 f"MACRO_REGIME_DEFENSE: Market regime is {regime.get('zone')} (Score: {regime.get('score')}/100). Speculative breakout longs restricted."
             )
 
-        # Gate 1: Daily Loss Circuit Breaker
-        if daily_pnl_usd <= -abs(self.daily_loss_limit_usd):
-            veto_reasons.append(
-                f"DAILY_LOSS_CIRCUIT_BREAKER_TRIGGERED: Current day PnL ${daily_pnl_usd:.2f} <= -${self.daily_loss_limit_usd:.2f}"
-            )
+        # Gate 1: Protection Subsystem (Cooldown, StoplossGuard, MaxDrawdown, Daily Loss)
+        prot_res = self.protections.evaluate_entry_protections(
+            symbol=symbol,
+            current_equity=current_equity,
+            peak_equity=peak_equity,
+            daily_loss_usd=daily_pnl_usd,
+            daily_loss_limit_usd=self.daily_loss_limit_usd,
+        )
+        if not prot_res.get("allowed", True):
+            for v in prot_res.get("violations", []):
+                veto_reasons.append(v)
 
         # Gate 2: Maximum Concurrent Positions Cap
         if len(active_positions) >= self.max_concurrent_positions and symbol not in active_positions:
@@ -85,7 +102,6 @@ class CryptoTradeGatekeeper:
             )
 
         # Gate 5: Trend & Regime Filter
-        # If buying, price should be surfing above 20 EMA, unless it is a confirmed SSL liquidity sweep
         if direction.upper() == "BUY":
             above_20_ema = technicals.get("above_20_ema", True)
             if not above_20_ema and not is_liquidity_sweep:
@@ -106,6 +122,16 @@ class CryptoTradeGatekeeper:
                 veto_reasons.append(
                     f"RSI_OVERSOLD: RSI is {rsi:.1f} (< 22.0), high bounce risk."
                 )
+
+        # Gate 7: Order Book Depth & Spread Guard
+        if order_book_analysis and not order_book_analysis.get("allowed_by_depth", True):
+            for v in order_book_analysis.get("violations", []):
+                veto_reasons.append(f"ORDER_BOOK_GUARD: {v}")
+
+        # Gate 8: Candle Health & Anti-Chasing Guard
+        if candle_health and not candle_health.get("allowed", True):
+            for v in candle_health.get("violations", []):
+                veto_reasons.append(f"CANDLE_HEALTH_GUARD: {v}")
 
         passed = len(veto_reasons) == 0
         verdict = "APPROVED" if passed else "VETOED"

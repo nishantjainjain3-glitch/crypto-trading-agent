@@ -129,6 +129,7 @@ class ContinuousCryptoRunner:
                 target_price = round(entry_price + (3.0 * atr), 4) if direction == "BUY" else round(entry_price - (3.0 * atr), 4)
 
             # Pass through gatekeeper
+            peak_equity = self.paper_trader.ledger.get("peak_equity_usdt", current_equity)
             passed, verdict, veto_reasons = self.gatekeeper.evaluate_candidate(
                 symbol=symbol,
                 direction=direction,
@@ -139,6 +140,9 @@ class ContinuousCryptoRunner:
                 active_positions=self.paper_trader.positions,
                 daily_pnl_usd=daily_pnl,
                 is_liquidity_sweep=(sweep is not None),
+                current_equity=current_equity,
+                peak_equity=peak_equity,
+                order_book_analysis=cand.get("order_book"),
             )
 
             if not passed:
