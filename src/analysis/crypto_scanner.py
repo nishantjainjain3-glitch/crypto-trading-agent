@@ -9,6 +9,7 @@ from src.analysis.technical_indicators import compute_all_technicals
 from src.analysis.liquidity_sweep import detect_liquidity_sweep
 from src.analysis.order_flow import analyze_order_flow
 from src.analysis.order_book_depth import analyze_order_book_depth
+from src.analysis.smart_money_signals import analyze_smart_money_backing
 
 logger = logging.getLogger(__name__)
 
@@ -111,6 +112,15 @@ class CryptoScanner:
                 score -= 10
                 bearish_factors.append(f"Order book depth warning: {v}")
 
+        # Binance Web3 On-Chain Smart Money Confluence
+        smart_money = analyze_smart_money_backing(symbol)
+        if smart_money.get("is_accumulating"):
+            score += 15
+            bullish_factors.append(smart_money["rationale"])
+        elif smart_money.get("direction") == "SELL" or smart_money.get("exit_rate_pct", 0) > 80.0:
+            score -= 10
+            bearish_factors.append(f"Smart Money exit risk: {smart_money.get('exit_rate_pct')}% of tracked whales exited")
+
         score = max(5, min(95, score))
         verdict = (
             "STRONG_BUY"
@@ -130,6 +140,7 @@ class CryptoScanner:
             "liquidity_sweep": sweep_signal,
             "order_flow": order_flow,
             "order_book": order_book,
+            "smart_money": smart_money,
             "bullish_factors": bullish_factors,
             "bearish_factors": bearish_factors,
         }

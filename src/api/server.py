@@ -67,6 +67,31 @@ def get_trade_history():
     """Fetch closed paper trading history."""
     return {"count": len(paper_trader.history), "history": paper_trader.history}
 
+@app.get("/api/risk")
+def get_portfolio_risk():
+    """Fetch institutional risk analytics: Cornish-Fisher VaR, CVaR, Sortino, Drawdown."""
+    import pandas as pd
+    from src.analysis.risk_metrics import PortfolioRiskEngine
+    history = paper_trader.history
+    if not history:
+        return {"status": "NO_CLOSED_TRADES_YET", "var_historical_pct": 0.0, "cvar_pct": 0.0}
+    returns = pd.Series([t.get("pnl_pct", 0.0) / 100.0 for t in history])
+    engine = PortfolioRiskEngine(returns)
+    return engine.compute_all_metrics()
+
+@app.get("/api/smart-money")
+def get_smart_money_signals(chain: str = "56"):
+    """Fetch Binance Web3 live smart-money wallet signals and top inflows."""
+    from src.analysis.smart_money_signals import fetch_smart_money_signals, fetch_smart_money_inflows
+    signals = fetch_smart_money_signals(chain_id=chain, page_size=20)
+    inflows = fetch_smart_money_inflows(chain_id=chain, period="24h")
+    return {
+        "chain_id": chain,
+        "signals_count": len(signals),
+        "signals": signals[:10],
+        "top_inflows": inflows[:10],
+    }
+
 class BacktestRequest(BaseModel):
     symbol: str = "BTC-USD"
     period: str = "1y"
