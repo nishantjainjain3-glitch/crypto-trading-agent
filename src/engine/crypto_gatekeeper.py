@@ -1,7 +1,9 @@
 """Adversarial trade gatekeeper enforcing multi-tier safety checks before execution."""
 
 import logging
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
+
+from src.analysis.regime_service import get_current_regime
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +37,20 @@ class CryptoTradeGatekeeper:
         active_positions: Dict[str, Any],
         daily_pnl_usd: float,
         is_liquidity_sweep: bool = False,
+        regime_info: Optional[Dict[str, Any]] = None,
     ) -> Tuple[bool, str, List[str]]:
         """
         Evaluate candidate setup against all safety gates.
         Returns: (passed: bool, verdict: str, veto_reasons: List[str])
         """
         veto_reasons = []
+        regime = regime_info or get_current_regime()
+
+        # Gate 0: Macro Regime Defense (Veto speculative longs if macro is RISK_OFF)
+        if regime.get("zone") == "RISK_OFF" and direction.upper() == "BUY" and not is_liquidity_sweep:
+            veto_reasons.append(
+                f"MACRO_REGIME_DEFENSE: Market regime is {regime.get('zone')} (Score: {regime.get('score')}/100). Speculative breakout longs restricted."
+            )
 
         # Gate 1: Daily Loss Circuit Breaker
         if daily_pnl_usd <= -abs(self.daily_loss_limit_usd):

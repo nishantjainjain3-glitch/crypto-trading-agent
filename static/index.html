@@ -34,6 +34,28 @@
       </div>
     </header>
 
+    <!-- Macro Market Regime Banner -->
+    <div class="card p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-emerald-950 border border-emerald-800 text-emerald-400 font-bold text-lg" id="regimeBadge">
+          --
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs uppercase tracking-wider text-slate-400 font-medium">Macro Crypto Regime:</span>
+            <span class="text-sm font-bold text-emerald-400 uppercase" id="regimeZone">ANALYZING...</span>
+            <span class="text-xs text-slate-500">• 6-Factor Quant Model</span>
+          </div>
+          <p class="text-xs text-slate-300 mt-0.5" id="regimeGuidance">Evaluating macro market health...</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+        <div>BTC Trend: <span class="font-semibold text-slate-200" id="regimeBtc">--</span></div>
+        <div>Funding: <span class="font-semibold text-slate-200" id="regimeFunding">--</span></div>
+        <div>Momentum: <span class="font-semibold text-emerald-400" id="regimeMom">--</span></div>
+      </div>
+    </div>
+
     <!-- Portfolio Metrics Grid -->
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
       <div class="card p-4 rounded-xl">
@@ -145,12 +167,31 @@
   <script>
     async function refreshData() {
       try {
-        const [portRes, screenRes] = await Promise.all([
+        const [portRes, screenRes, regimeRes] = await Promise.all([
           fetch('/api/portfolio'),
-          fetch('/api/screener')
+          fetch('/api/screener'),
+          fetch('/api/regime')
         ]);
         const port = await portRes.json();
         const screen = await screenRes.json();
+        const regime = await regimeRes.json();
+
+        // Populate Regime Banner
+        if (regime) {
+          const badge = document.getElementById('regimeBadge');
+          badge.innerText = Math.round(regime.score || 50);
+          const isRiskOn = (regime.zone === 'RISK_ON');
+          badge.className = `w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg ${isRiskOn ? 'bg-emerald-950 border border-emerald-800 text-emerald-400' : (regime.zone === 'RISK_OFF' ? 'bg-rose-950 border border-rose-800 text-rose-400' : 'bg-slate-800 border border-slate-700 text-slate-300')}`;
+          
+          const zEl = document.getElementById('regimeZone');
+          zEl.innerText = regime.zone || 'NEUTRAL';
+          zEl.className = `text-sm font-bold uppercase ${isRiskOn ? 'text-emerald-400' : (regime.zone === 'RISK_OFF' ? 'text-rose-400' : 'text-slate-300')}`;
+
+          document.getElementById('regimeGuidance').innerText = regime.guidance || '';
+          document.getElementById('regimeBtc').innerText = (regime.btc_trend || '').slice(0, 30);
+          document.getElementById('regimeFunding').innerText = (regime.funding || '').slice(0, 30);
+          document.getElementById('regimeMom').innerText = (regime.momentum || '').slice(0, 30);
+        }
 
         // Populate Portfolio
         document.getElementById('totalEquity').innerText = `$${port.total_equity_usdt.toLocaleString()}`;

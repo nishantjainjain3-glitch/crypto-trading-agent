@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from src.exchanges.ccxt_client import CryptoExchangeClient
 from src.analysis.crypto_scanner import CryptoScanner
 from src.analysis.backtest_runner import CryptoBacktester
+from src.analysis.regime_service import get_current_regime
 from src.engine.crypto_paper_trader import CryptoPaperTrader
 from src.engine.continuous_runner import ContinuousCryptoRunner
 
@@ -53,6 +54,11 @@ def get_screener_results():
     """Fetch real-time scanner analysis across the watchlist."""
     results = scanner.scan_all()
     return {"count": len(results), "candidates": results}
+
+@app.get("/api/regime")
+def get_market_regime():
+    """Fetch current macro crypto market regime health score and indicators."""
+    return get_current_regime()
 
 @app.get("/api/history")
 def get_trade_history():
