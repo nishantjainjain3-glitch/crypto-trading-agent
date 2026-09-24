@@ -1,0 +1,65 @@
+{
+  "metadata": {
+    "as_of": "2026-09-24T09:08:48.139183+00:00",
+    "universe_size": 5
+  },
+  "components": {
+    "btc_trend": {
+      "score": 100,
+      "signal": "BULL STACK (price > 50DMA > 200DMA); 200DMA rising",
+      "data_available": true,
+      "price": 83545.54,
+      "ma50": 74908.62,
+      "ma200": 70835.64,
+      "ma200_rising": true,
+      "ma200_direction": "rising"
+    },
+    "alt_breadth": {
+      "score": 50,
+      "signal": "NO DATA: Only 4 alts with >= 200d history (need 5)",
+      "data_available": false
+    },
+    "dominance": {
+      "score": 50,
+      "signal": "NO DATA: Need >= 31 daily dominance points",
+      "data_available": false
+    },
+    "funding": {
+      "score": 75,
+      "signal": "NEUTRAL (funding near baseline); avg 0.0006%/8h (~0.7% annualized) across 5 perps",
+      "data_available": true,
+      "avg_funding_8h": 5.974000000000001e-06,
+      "annualized_pct": 0.65,
+      "n_symbols": 5
+    },
+    "drawdown_vol": {
+      "score": 45,
+      "signal": "Drawdown 33.0% from 1y high; volatility elevated (top third of 1y range)",
+      "data_available": true,
+      "drawdown_pct": 33.02,
+      "realized_vol_30d": 0.4413,
+      "vol_percentile_1y": 0.71
+    },
+    "momentum_thrust": {
+      "score": 90,
+      "signal": "BROAD THRUST: 100% of 5 coins positive over 30d",
+      "data_available": true,
+      "pct_positive_30d": 100.0,
+      "universe_size": 5
+    }
+  },
+  "composite": {
+    "score": 80.0,
+    "zone": "RISK_ON",
+    "guidance": "Broad risk-on conditions observed; review risk limits before decisions",
+    "effective_weights": {
+      "btc_trend": 0.3846,
+      "funding": 0.2308,
+      "drawdown_vol": 0.2308,
+      "momentum_thrust": 0.1538
+    },
+    "components_available": 4,
+    "components_total": 6,
+    "available_weight": 0.65
+  }
+}
