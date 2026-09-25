@@ -1,0 +1,12 @@
+{
+  "status": "WHITELISTED",
+  "alert": false,
+  "current_ip": "152.59.152.111",
+  "whitelisted_ips": [
+    "152.59.152.111",
+    "152.59.153.213",
+    "49.37.100.175"
+  ],
+  "last_checked": "2026-09-25 20:38:57 UTC",
+  "message": "Public IP 152.59.152.111 is active and whitelisted."
+}

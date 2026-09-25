@@ -19,6 +19,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger("watchdog")
 
+from src.engine.ip_monitor import IPMonitor
+
 PORT = int(os.getenv("PORT", 8000))
 HEALTH_URL = f"http://localhost:{PORT}/api/portfolio"
 MAX_FAILED_CHECKS = 3
@@ -39,6 +41,8 @@ def run_supervisor():
         logger.info(f"Launching trading bot process: {' '.join(cmd)}")
         proc = subprocess.Popen(cmd)
         failed_checks = 0
+        ip_monitor = IPMonitor()
+        check_counter = 0
 
         # Wait 10s for initial boot
         time.sleep(10)
@@ -63,6 +67,16 @@ def run_supervisor():
                     except Exception:
                         proc.kill()
                     break
+
+            # Periodically verify public IP against Binance whitelist (every 60s)
+            check_counter += 1
+            if check_counter % 3 == 0:
+                try:
+                    ip_status = ip_monitor.check_ip()
+                    if ip_status.get("alert"):
+                        logger.critical(f"IP MISMATCH DETECTED: {ip_status.get('message')}")
+                except Exception as e:
+                    logger.error(f"Error checking IP status in watchdog: {e}")
 
             time.sleep(CHECK_INTERVAL_SECONDS)
 

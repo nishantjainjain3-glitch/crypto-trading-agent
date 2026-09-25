@@ -13,6 +13,7 @@ from src.analysis.backtest_runner import CryptoBacktester
 from src.analysis.regime_service import get_current_regime
 from src.engine.crypto_paper_trader import CryptoPaperTrader
 from src.engine.continuous_runner import ContinuousCryptoRunner
+from src.engine.ip_monitor import IPMonitor, load_whitelisted_ips, save_whitelisted_ips
 
 app = FastAPI(title="Crypto Trade Agent API", version="1.0.0")
 
@@ -22,6 +23,7 @@ scanner = CryptoScanner(exchange_client=exchange_client)
 runner = ContinuousCryptoRunner()
 paper_trader = runner.paper_trader
 backtester = CryptoBacktester()
+ip_monitor = IPMonitor()
 
 static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "static")
 if os.path.exists(static_dir):
@@ -66,6 +68,7 @@ def get_system_status():
         except Exception:
             conn_ok = False
 
+    ip_info = ip_monitor.check_ip()
     return {
         "status": "ONLINE",
         "live_execution_enabled": live_enabled,
@@ -74,7 +77,22 @@ def get_system_status():
         "free_usdt": bal_usdt,
         "open_positions": len(paper_trader.positions),
         "total_trades": len(paper_trader.history),
+        "ip_status": ip_info,
     }
+
+@app.get("/api/ip")
+def get_ip_status():
+    """Fetch current public IP and Binance whitelist status."""
+    return ip_monitor.check_ip()
+
+@app.post("/api/ip/whitelist")
+def add_ip_to_whitelist(ip: str = Query(...)):
+    """Add a new IP address to the local whitelist cache."""
+    ips = load_whitelisted_ips()
+    if ip not in ips:
+        ips.append(ip)
+        save_whitelisted_ips(ips)
+    return {"status": "SUCCESS", "whitelisted_ips": ips}
 
 @app.get("/api/screener")
 def get_screener_results():
