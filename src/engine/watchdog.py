@@ -84,4 +84,12 @@ def run_supervisor():
         time.sleep(5)
 
 if __name__ == "__main__":
-    run_supervisor()
+    while True:
+        try:
+            run_supervisor()
+        except KeyboardInterrupt:
+            logger.info("Watchdog supervisor stopped by user.")
+            break
+        except Exception as e:
+            logger.exception(f"Fatal watchdog crash, auto-recovering in 5s: {e}")
+            time.sleep(5)
