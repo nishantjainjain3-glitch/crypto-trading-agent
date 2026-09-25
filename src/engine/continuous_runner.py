@@ -32,7 +32,7 @@ class ContinuousCryptoRunner:
         self.is_live = os.getenv("LIVE_EXECUTION_ENABLED", "false").lower() == "true"
         if self.is_live and self.client.exchange:
             try:
-                bal = self.client.exchange.fetch_balance()
+                bal = self.client.fetch_balance()
                 live_cash = bal.get("free", {}).get("USDT", 0.0)
                 if len(self.paper_trader.positions) == 0:
                     self.paper_trader.ledger["virtual_cash_usdt"] = live_cash
@@ -72,7 +72,7 @@ class ContinuousCryptoRunner:
             if self.is_live and trade.get("direction") == "BUY":
                 try:
                     base_currency = trade["symbol"].split("/")[0]
-                    bal = self.client.exchange.fetch_balance()
+                    bal = self.client.fetch_balance()
                     avail = bal.get("free", {}).get(base_currency, 0.0)
                     sell_qty = min(trade["quantity"], avail)
                     formatted_qty = self.client.exchange.amount_to_precision(trade["symbol"], sell_qty)
@@ -163,7 +163,7 @@ class ContinuousCryptoRunner:
 
             if self.is_live:
                 try:
-                    bal = self.client.exchange.fetch_balance()
+                    bal = self.client.fetch_balance()
                     live_cash = bal.get("free", {}).get("USDT", 0.0)
                     if live_cash < 5.0:
                         logger.warning(f"Live cash ${live_cash:.2f} is below $5.00 minNotional. Skipping live buy.")

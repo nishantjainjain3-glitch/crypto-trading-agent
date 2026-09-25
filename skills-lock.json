@@ -12,6 +12,12 @@
       "sourceType": "github",
       "skillPath": "skills/crypto-trading-bots/SKILL.md",
       "computedHash": "aaae2a40719b4006ff88420ca0c48ebac3c09c27fa13bd0a96594dc2d7c656bc"
+    },
+    "query-token-audit": {
+      "source": "binance/binance-skills-hub",
+      "sourceType": "github",
+      "skillPath": "skills/binance-web3/query-token-audit/SKILL.md",
+      "computedHash": "1379ddaa0f173d2acfa273216337a2f217cafa309d534331dd37744394c00fb4"
     }
   }
 }

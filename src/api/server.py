@@ -19,8 +19,8 @@ app = FastAPI(title="Crypto Trade Agent API", version="1.0.0")
 # Global instances
 exchange_client = CryptoExchangeClient()
 scanner = CryptoScanner(exchange_client=exchange_client)
-paper_trader = CryptoPaperTrader()
 runner = ContinuousCryptoRunner()
+paper_trader = runner.paper_trader
 backtester = CryptoBacktester()
 
 static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "static")
@@ -38,7 +38,8 @@ def get_dashboard():
 @app.get("/api/portfolio")
 def get_portfolio():
     """Fetch current portfolio, ledger metrics, and open positions."""
-    # Fetch live prices for open positions
+    paper_trader.positions = paper_trader._load_positions()
+    paper_trader.ledger = paper_trader._load_ledger()
     open_syms = list(paper_trader.positions.keys())
     prices = {}
     for s in open_syms:
@@ -92,6 +93,12 @@ def get_smart_money_signals(chain: str = "56"):
         "top_inflows": inflows[:10],
     }
 
+@app.get("/api/token-audit")
+def get_token_audit(contract: str, chain: str = "56"):
+    """Audit token contract for honeypots, rug pulls, and hidden taxes via Binance Web3 Security."""
+    from src.analysis.token_security import audit_token_contract
+    return audit_token_contract(contract_address=contract, chain_id=chain)
+
 class BacktestRequest(BaseModel):
     symbol: str = "BTC-USD"
     period: str = "1y"
@@ -138,7 +145,7 @@ async def background_runner_loop():
     """Autonomous 24/7 background loop running market scans and position checks."""
     while True:
         try:
-            runner.run_single_iteration()
+            await asyncio.to_thread(runner.run_single_iteration)
         except Exception as e:
             logger.error(f"Error in background runner: {e}")
         await asyncio.sleep(60)

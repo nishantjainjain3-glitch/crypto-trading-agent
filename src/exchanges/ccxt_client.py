@@ -38,18 +38,45 @@ class CryptoExchangeClient:
             config = {
                 "enableRateLimit": True,
                 "timeout": 15000,
+                "options": {
+                    "defaultType": "spot",
+                    "fetchCurrencies": False,
+                },
             }
             if self.api_key and self.secret:
                 config["apiKey"] = self.api_key
                 config["secret"] = self.secret
 
             self.exchange = exchange_class(config)
+            self.exchange.has["fetchCurrencies"] = False
             if self.testnet and hasattr(self.exchange, "set_sandbox_mode"):
                 self.exchange.set_sandbox_mode(True)
             logger.info(f"Initialized {self.exchange_id} exchange client")
         except Exception as e:
             logger.warning(f"Could not initialize ccxt {self.exchange_id}: {e}. Running in offline/fallback mode.")
-            self.exchange = None
+
+    def fetch_balance(self) -> Dict[str, Any]:
+        """Fetch spot account balances directly and fast (0.3s)."""
+        if not self.exchange:
+            return {"free": {}, "total": {}}
+        try:
+            if hasattr(self.exchange, "privateGetAccount"):
+                acc = self.exchange.privateGetAccount()
+                free_map = {}
+                total_map = {}
+                for b in acc.get("balances", []):
+                    f = float(b.get("free", 0.0))
+                    l = float(b.get("locked", 0.0))
+                    if f > 0 or l > 0:
+                        asset = b["asset"]
+                        free_map[asset] = f
+                        total_map[asset] = f + l
+                return {"free": free_map, "total": total_map}
+            else:
+                return self.exchange.fetch_balance()
+        except Exception as e:
+            logger.error(f"Error fetching balance: {e}")
+            return {"free": {}, "total": {}}
 
     def fetch_ticker(self, symbol: str) -> Dict[str, Any]:
         """Fetch current ticker price and 24h stats."""
