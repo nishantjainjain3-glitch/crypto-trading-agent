@@ -1,4 +1,23 @@
 {
   "cooldowns": {},
-  "stoploss_history": []
+  "stoploss_history": [
+    {
+      "symbol": "DOGE/USDT",
+      "exit_price": 0.0951,
+      "loss_pct": 0.84,
+      "timestamp": "2026-09-24T16:11:46.177796+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 2675.7048,
+      "loss_pct": -0.94,
+      "timestamp": "2026-09-25T02:54:52.945202+00:00"
+    },
+    {
+      "symbol": "BNB/USDT",
+      "exit_price": 772.5355,
+      "loss_pct": -0.34,
+      "timestamp": "2026-09-25T03:16:40.909194+00:00"
+    }
+  ]
 }

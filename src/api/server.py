@@ -52,6 +52,30 @@ def get_portfolio():
     summary["exchange_id"] = exchange_client.exchange_id
     return summary
 
+@app.get("/api/status")
+def get_system_status():
+    """Fetch live system health, connection status, and balance."""
+    live_enabled = os.getenv("LIVE_EXECUTION_ENABLED", "false").lower() == "true"
+    bal_usdt = 0.0
+    conn_ok = False
+    if exchange_client.exchange:
+        try:
+            b = exchange_client.fetch_balance()
+            bal_usdt = b.get("free", {}).get("USDT", 0.0)
+            conn_ok = True
+        except Exception:
+            conn_ok = False
+
+    return {
+        "status": "ONLINE",
+        "live_execution_enabled": live_enabled,
+        "exchange": exchange_client.exchange_id,
+        "exchange_connected": conn_ok,
+        "free_usdt": bal_usdt,
+        "open_positions": len(paper_trader.positions),
+        "total_trades": len(paper_trader.history),
+    }
+
 @app.get("/api/screener")
 def get_screener_results():
     """Fetch real-time scanner analysis across the watchlist."""
@@ -145,7 +169,12 @@ async def background_runner_loop():
     """Autonomous 24/7 background loop running market scans and position checks."""
     while True:
         try:
-            await asyncio.to_thread(runner.run_single_iteration)
+            logger.info("Autonomous scan heartbeat: evaluating watchlist order books and positions...")
+            log = await asyncio.to_thread(runner.run_single_iteration)
+            closed_cnt = len(log.get("closed_trades", []))
+            new_cnt = len(log.get("new_trades", []))
+            veto_cnt = len(log.get("vetoed_candidates", []))
+            logger.info(f"Scan cycle complete: {new_cnt} entries, {closed_cnt} exits, {veto_cnt} filtered setups.")
         except Exception as e:
             logger.error(f"Error in background runner: {e}")
         await asyncio.sleep(60)
