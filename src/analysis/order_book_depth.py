@@ -57,10 +57,21 @@ def analyze_order_book_depth(
     imbalance = round(total_bid_qty / total_ask_qty, 3) if total_ask_qty > 0 else 999.0
 
     best_bid = float(bids[0][0])
+    best_bid_qty = float(bids[0][1])
     best_ask = float(asks[0][0])
+    best_ask_qty = float(asks[0][1])
     mid_price = (best_bid + best_ask) / 2.0
     spread_pts = best_ask - best_bid
     spread_bps = round((spread_pts / mid_price) * 10000, 1) if mid_price > 0 else 0.0
+
+    # Stoikov Micro-Price (fair value adjusted for top-of-book bid/ask queue imbalance)
+    top_qty = best_bid_qty + best_ask_qty
+    if top_qty > 0:
+        micro_price = round(((best_bid * best_ask_qty) + (best_ask * best_bid_qty)) / top_qty, 4)
+        micro_price_premium_bps = round(((micro_price - mid_price) / mid_price) * 10000, 2)
+    else:
+        micro_price = mid_price
+        micro_price_premium_bps = 0.0
 
     # Large wall check (> 3x average level size)
     num_levels = len(bids) + len(asks)
@@ -96,6 +107,8 @@ def analyze_order_book_depth(
         "best_bid": best_bid,
         "best_ask": best_ask,
         "mid_price": mid_price,
+        "micro_price": micro_price,
+        "micro_price_premium_bps": micro_price_premium_bps,
         "spread_bps": spread_bps,
         "imbalance_ratio": imbalance,
         "total_bid_qty": round(total_bid_qty, 2),
