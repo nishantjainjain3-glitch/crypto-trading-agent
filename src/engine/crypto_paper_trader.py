@@ -340,8 +340,25 @@ class CryptoPaperTrader:
 
         total_equity = self.ledger["virtual_cash_usdt"] + sum(p["allocated_usd"] for p in self.positions.values()) + unrealized_pnl
 
+        today_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        baseline = float(self.ledger.get("current_investment_baseline_usdt") or self.ledger.get("initial_capital_usdt", total_equity))
+        session_date = self.ledger.get("session_start_date")
+
+        # Roll over baseline daily at 00:00 UTC so current balance becomes the new investment baseline
+        if session_date != today_date:
+            baseline = round(total_equity, 2)
+            self.ledger["current_investment_baseline_usdt"] = baseline
+            self.ledger["session_start_date"] = today_date
+            self._save_ledger()
+
+        today_pnl = round(total_equity - baseline, 2)
+        today_return_pct = round((today_pnl / baseline) * 100, 2) if baseline > 0 else 0.0
+
         return {
             "total_equity_usdt": round(total_equity, 2),
+            "current_investment_usdt": baseline,
+            "today_pnl_usdt": today_pnl,
+            "today_return_pct": today_return_pct,
             "cash_usdt": round(self.ledger["virtual_cash_usdt"], 2),
             "realized_pnl_usdt": self.ledger["realized_pnl_usdt"],
             "unrealized_pnl_usdt": round(unrealized_pnl, 2),
