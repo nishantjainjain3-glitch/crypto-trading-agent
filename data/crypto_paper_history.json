@@ -96,5 +96,33 @@
     "entry_time": "2026-09-25 08:52:05 UTC",
     "exit_time": "2026-09-25 13:47:27 UTC",
     "total_fees_usd": 0.0225
+  },
+  {
+    "symbol": "DOGE/USDT",
+    "direction": "BUY",
+    "entry_price": 0.0982,
+    "exit_price": 0.0991,
+    "quantity": 156.0,
+    "allocated_usd": 15.32,
+    "net_pnl_usd": 0.12,
+    "pnl_pct": 0.78,
+    "exit_reason": "STOP_LOSS_HIT",
+    "entry_time": "2026-09-26 01:44:20 UTC",
+    "exit_time": "2026-09-26 04:37:08 UTC",
+    "total_fees_usd": 0.0231
+  },
+  {
+    "symbol": "BNB/USDT",
+    "direction": "BUY",
+    "entry_price": 777.4455,
+    "exit_price": 775.1949,
+    "quantity": 0.019,
+    "allocated_usd": 14.77,
+    "net_pnl_usd": -0.06,
+    "pnl_pct": -0.41,
+    "exit_reason": "STOP_LOSS_HIT",
+    "entry_time": "2026-09-26 04:51:44 UTC",
+    "exit_time": "2026-09-26 06:04:20 UTC",
+    "total_fees_usd": 0.0221
   }
 ]
