@@ -167,9 +167,9 @@ class CryptoPaperTrader:
                 pos["highest_price"] = max(pos["highest_price"], current_price)
                 unrealized_pnl = (current_price - entry_p) * qty
 
-                # Dynamic Breakeven Rule: at +1.0x ATR move stop to breakeven + buffer
-                if not pos["breakeven_triggered"] and (current_price - entry_p) >= (1.0 * atr):
-                    pos["stop_loss"] = round(entry_p * 1.001, 4)
+                # Dynamic Breakeven Rule: at +0.5x ATR move stop to breakeven + buffer
+                if not pos["breakeven_triggered"] and (current_price - entry_p) >= (0.5 * atr):
+                    pos["stop_loss"] = round(entry_p * 1.0008, 4)
                     pos["breakeven_triggered"] = True
                     logger.info(f"{symbol}: Dynamic breakeven activated at ${pos['stop_loss']}")
 
@@ -210,8 +210,8 @@ class CryptoPaperTrader:
                 pos["lowest_price"] = min(pos["lowest_price"], current_price)
                 unrealized_pnl = (entry_p - current_price) * qty
 
-                if not pos["breakeven_triggered"] and (entry_p - current_price) >= (1.0 * atr):
-                    pos["stop_loss"] = round(entry_p * 0.999, 4)
+                if not pos["breakeven_triggered"] and (entry_p - current_price) >= (0.5 * atr):
+                    pos["stop_loss"] = round(entry_p * 0.9992, 4)
                     pos["breakeven_triggered"] = True
 
                 if (entry_p - current_price) >= (1.75 * atr):

@@ -1,1 +1,20 @@
-{}
+{
+  "AVAX/USDT": {
+    "symbol": "AVAX/USDT",
+    "direction": "BUY",
+    "entry_price": 10.9192,
+    "quantity": 1.38,
+    "allocated_usd": 15.07,
+    "stop_loss": 10.7934,
+    "initial_stop_loss": 10.7934,
+    "target_price": 11.1642,
+    "atr": 0.0824,
+    "highest_price": 10.9192,
+    "lowest_price": 10.9192,
+    "breakeven_triggered": false,
+    "trailing_stop_triggered": false,
+    "entry_time": "2026-09-26 17:56:10 UTC",
+    "entry_fee_usd": 0.0113,
+    "rationale": "Score 70/100 | LIVE BROKER | BUY"
+  }
+}

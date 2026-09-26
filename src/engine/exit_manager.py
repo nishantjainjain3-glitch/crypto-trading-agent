@@ -57,7 +57,7 @@ def compute_crypto_trailing_stop(
     highest_price: float,
     initial_stop_loss: float,
     atr: float,
-    breakeven_threshold_atr: float = 1.0,
+    breakeven_threshold_atr: float = 0.5,
     trailing_activation_atr: float = 1.75,
     trailing_distance_atr: float = 1.0,
 ) -> Dict[str, Any]:
@@ -76,7 +76,7 @@ def compute_crypto_trailing_stop(
         trail_level = round(peak - (trailing_distance_atr * atr), 6)
         effective_stop = max(effective_stop, trail_level)
     elif breakeven_active:
-        be_level = round(entry_price * 1.001, 6)
+        be_level = round(entry_price * 1.0008, 6)
         effective_stop = max(effective_stop, be_level)
 
     return {

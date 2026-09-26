@@ -88,6 +88,24 @@ class CryptoScanner:
                 score -= 15
                 bearish_factors.append(sweep_signal["rationale"])
 
+        # Higher Timeframe (1H) Trend Confirmation
+        try:
+            df_1h = self.client.fetch_ohlcv(symbol, timeframe="1h", limit=60)
+            if not df_1h.empty and len(df_1h) >= 20:
+                span_len = min(50, len(df_1h))
+                ema50_1h = df_1h["close"].ewm(span=span_len, adjust=False).mean().iloc[-1]
+                last_1h_close = df_1h["close"].iloc[-1]
+                htf_bullish = bool(last_1h_close > ema50_1h)
+                technicals["htf_bullish"] = htf_bullish
+                if htf_bullish:
+                    score += 10
+                    bullish_factors.append("Higher Timeframe (1H) Bullish Alignment: Price above 1H 50 EMA")
+                else:
+                    score -= 15
+                    bearish_factors.append("Higher Timeframe (1H) Headwind: Price below 1H 50 EMA")
+        except Exception as e:
+            logger.debug(f"1H trend check failed for {symbol}: {e}")
+
         # Order Flow & Smart Money Confluence
         if order_flow:
             of_verdict = order_flow.get("verdict", "NEUTRAL")
@@ -146,7 +164,7 @@ class CryptoScanner:
         }
 
     def scan_watchlist(self, timeframe: str = "15m") -> List[Dict[str, Any]]:
-        """Scan entire watchlist and return opportunities sorted by conviction."""
+        """Scan entire watchlist and rank opportunities using Relative Strength vs BTC."""
         results = []
         for symbol in self.watchlist:
             try:
@@ -154,6 +172,28 @@ class CryptoScanner:
                 results.append(res)
             except Exception as e:
                 logger.error(f"Error scanning {symbol}: {e}")
+
+        # Relative Strength (RS) Ranking vs Bitcoin
+        btc_cand = next((c for c in results if c["symbol"] == "BTC/USDT"), None)
+        btc_change = btc_cand.get("change_24h_pct", 0.0) if btc_cand else 0.0
+
+        for cand in results:
+            sym = cand["symbol"]
+            sym_change = cand.get("change_24h_pct", 0.0)
+            rs_vs_btc = round(sym_change - btc_change, 2)
+            cand["rs_vs_btc"] = rs_vs_btc
+            if sym != "BTC/USDT":
+                if rs_vs_btc >= 1.5:
+                    cand["conviction_score"] = min(95, cand["conviction_score"] + 10)
+                    cand.setdefault("technicals", {})["is_leader"] = True
+                    cand.setdefault("technicals", {})["is_laggard"] = False
+                    cand["bullish_factors"].append(f"Market Leader: Outperforming BTC by +{rs_vs_btc}% over 24h")
+                elif rs_vs_btc <= -1.5:
+                    cand["conviction_score"] = max(5, cand["conviction_score"] - 10)
+                    cand.setdefault("technicals", {})["is_leader"] = False
+                    cand.setdefault("technicals", {})["is_laggard"] = True
+                    cand["bearish_factors"].append(f"Market Laggard: Underperforming BTC by {rs_vs_btc}% over 24h")
+
         results.sort(key=lambda x: x["conviction_score"], reverse=True)
         return results
 

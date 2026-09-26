@@ -133,6 +133,18 @@ class CryptoTradeGatekeeper:
             for v in candle_health.get("violations", []):
                 veto_reasons.append(f"CANDLE_HEALTH_GUARD: {v}")
 
+        # Gate 9: Higher Timeframe (1H) Trend Alignment
+        if direction.upper() == "BUY" and technicals.get("htf_bullish") is False and not is_liquidity_sweep:
+            veto_reasons.append(
+                "HTF_HEADWIND: Price is below 1-Hour 50 EMA. Counter-trend long entry prohibited."
+            )
+
+        # Gate 10: Market Laggard vs Bitcoin Filter
+        if direction.upper() == "BUY" and technicals.get("is_laggard") is True and not is_liquidity_sweep:
+            veto_reasons.append(
+                "MARKET_LAGGARD: Coin is underperforming Bitcoin by >1.5% over 24h. Weak momentum."
+            )
+
         passed = len(veto_reasons) == 0
         verdict = "APPROVED" if passed else "VETOED"
         return passed, verdict, veto_reasons
