@@ -135,6 +135,15 @@ def get_smart_money_signals(chain: str = "56"):
         "top_inflows": inflows[:10],
     }
 
+@app.get("/api/counterfactuals")
+def get_counterfactuals():
+    """Fetch all recorded counterfactual shadow trades and filter attribution metrics."""
+    return {
+        "summary": runner.counterfactual_tracker.get_summary(),
+        "attribution": runner.counterfactual_tracker.recompute_attribution(),
+        "recent_entries": runner.counterfactual_tracker.entries[-30:],
+    }
+
 @app.get("/api/token-audit")
 def get_token_audit(contract: str, chain: str = "56"):
     """Audit token contract for honeypots, rug pulls, and hidden taxes via Binance Web3 Security."""

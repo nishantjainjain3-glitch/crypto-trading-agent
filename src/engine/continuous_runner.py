@@ -10,6 +10,7 @@ from src.analysis.crypto_scanner import CryptoScanner, DEFAULT_WATCHLIST
 from src.engine.position_sizer import PositionSizer
 from src.engine.crypto_gatekeeper import CryptoTradeGatekeeper
 from src.engine.crypto_paper_trader import CryptoPaperTrader
+from src.engine.counterfactual_tracker import CounterfactualTracker
 from src.notifications.telegram import TelegramNotifier
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,10 @@ class ContinuousCryptoRunner:
         self.scanner = CryptoScanner(exchange_client=self.client, watchlist=self.watchlist)
         self.paper_trader = CryptoPaperTrader(data_dir=data_dir)
         self.gatekeeper = CryptoTradeGatekeeper()
+        self.counterfactual_tracker = CounterfactualTracker(
+            ledger_path=os.path.join(data_dir, "counterfactual_ledger.json"),
+            attribution_path=os.path.join(data_dir, "gatekeeper_attribution.json"),
+        )
         self.position_sizer = PositionSizer()
         self.notifier = TelegramNotifier()
         self.is_live = os.getenv("LIVE_EXECUTION_ENABLED", "false").lower() == "true"
@@ -91,6 +96,11 @@ class ContinuousCryptoRunner:
             )
             self.notifier.send_message(msg)
 
+        # Step 2b: Update open counterfactual shadow trades with current market prices
+        resolved_cf = self.counterfactual_tracker.evaluate_open_counterfactuals(current_prices)
+        if resolved_cf:
+            iteration_log["resolved_counterfactuals"] = resolved_cf
+
         # Step 3: Run full scanner on watchlist
         candidates = self.scanner.scan_all()
 
@@ -150,6 +160,16 @@ class ContinuousCryptoRunner:
                     "symbol": symbol,
                     "reasons": veto_reasons,
                 })
+                self.counterfactual_tracker.record_declined_setup(
+                    symbol=symbol,
+                    direction=direction,
+                    entry_price=entry_price,
+                    stop_loss=stop_loss,
+                    target_price=target_price,
+                    atr=atr,
+                    veto_reasons=veto_reasons,
+                    score=score,
+                )
                 continue
 
             # Compute position size

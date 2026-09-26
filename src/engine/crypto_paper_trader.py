@@ -164,7 +164,8 @@ class CryptoPaperTrader:
             direction = pos.get("direction", "BUY")
 
             if direction == "BUY":
-                pos["highest_price"] = max(pos["highest_price"], current_price)
+                pos["highest_price"] = max(pos.get("highest_price", entry_p), current_price)
+                pos["lowest_price"] = min(pos.get("lowest_price", entry_p), current_price)
                 unrealized_pnl = (current_price - entry_p) * qty
 
                 # Dynamic Breakeven Rule: at +0.5x ATR move stop to breakeven + buffer
@@ -207,7 +208,8 @@ class CryptoPaperTrader:
                     closed_trades.append(closed)
 
             elif direction == "SELL":
-                pos["lowest_price"] = min(pos["lowest_price"], current_price)
+                pos["lowest_price"] = min(pos.get("lowest_price", entry_p), current_price)
+                pos["highest_price"] = max(pos.get("highest_price", entry_p), current_price)
                 unrealized_pnl = (entry_p - current_price) * qty
 
                 if not pos["breakeven_triggered"] and (entry_p - current_price) >= (0.5 * atr):
@@ -273,6 +275,23 @@ class CryptoPaperTrader:
         total_t = self.ledger["total_trades"]
         self.ledger["win_rate_pct"] = round((self.ledger["winning_trades"] / total_t) * 100, 2) if total_t else 0.0
 
+        highest_seen = pos.get("highest_price", entry_p)
+        lowest_seen = pos.get("lowest_price", entry_p)
+        if direction == "BUY":
+            mfe_pct = round(((highest_seen - entry_p) / entry_p) * 100, 2)
+            mae_pct = round(((lowest_seen - entry_p) / entry_p) * 100, 2)
+        else:
+            mfe_pct = round(((entry_p - lowest_seen) / entry_p) * 100, 2)
+            mae_pct = round(((entry_p - highest_seen) / entry_p) * 100, 2)
+
+        holding_seconds = 0
+        try:
+            entry_clean = pos["entry_time"].replace(" UTC", "")
+            dt_ent = datetime.fromisoformat(entry_clean).replace(tzinfo=timezone.utc)
+            holding_seconds = int((datetime.now(timezone.utc) - dt_ent).total_seconds())
+        except Exception:
+            pass
+
         trade_record = {
             "symbol": symbol,
             "direction": direction,
@@ -282,6 +301,9 @@ class CryptoPaperTrader:
             "allocated_usd": pos["allocated_usd"],
             "net_pnl_usd": net_pnl,
             "pnl_pct": pnl_pct,
+            "mfe_pct": mfe_pct,
+            "mae_pct": mae_pct,
+            "holding_seconds": holding_seconds,
             "exit_reason": reason,
             "entry_time": pos["entry_time"],
             "exit_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC"),
