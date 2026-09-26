@@ -1,0 +1,27 @@
+[
+  {
+    "id": "c3b61100",
+    "symbol": "ETH/USDT",
+    "direction": "BUY",
+    "entry_price": 2689.07,
+    "stop_loss": 2684.6794,
+    "target_price": 2697.8513,
+    "atr": 2.9271,
+    "score": 70.0,
+    "primary_gate": "COOLDOWN_ACTIVE",
+    "all_veto_reasons": [
+      "COOLDOWN_ACTIVE: StoplossGuard: 3 stop-loss hits in last 48 hours (Whipsaw Protection) (Expires in 48.0h)"
+    ],
+    "hypothetical_stake_usd": 15.0,
+    "status": "OPEN",
+    "outcome": "PENDING",
+    "entry_time": "2026-09-26 12:59:04 UTC",
+    "exit_time": null,
+    "exit_price": null,
+    "highest_price": 2689.07,
+    "lowest_price": 2689.07,
+    "hypothetical_pnl_usd": 0.0,
+    "saved_loss_usd": 0.0,
+    "missed_profit_usd": 0.0
+  }
+]

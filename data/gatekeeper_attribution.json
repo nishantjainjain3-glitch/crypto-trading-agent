@@ -1,0 +1,12 @@
+{
+  "COOLDOWN_ACTIVE": {
+    "total_vetoed": 1,
+    "resolved_count": 0,
+    "open_count": 1,
+    "saved_losses_usd": 0.0,
+    "missed_profits_usd": 0.0,
+    "net_benefit_usd": 0.0,
+    "saved_trades_count": 0,
+    "missed_trades_count": 0
+  }
+}
