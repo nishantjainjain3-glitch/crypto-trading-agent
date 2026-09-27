@@ -11,6 +11,7 @@ from src.engine.position_sizer import PositionSizer
 from src.engine.crypto_gatekeeper import CryptoTradeGatekeeper
 from src.engine.crypto_paper_trader import CryptoPaperTrader
 from src.engine.counterfactual_tracker import CounterfactualTracker
+from src.analysis.sentiment_service import get_crypto_fear_and_greed, get_binance_funding_rate
 from src.notifications.telegram import TelegramNotifier
 
 logger = logging.getLogger(__name__)
@@ -108,11 +109,15 @@ class ContinuousCryptoRunner:
         ledger_summary = self.paper_trader.get_portfolio_summary(current_prices)
         current_equity = ledger_summary["total_equity_usdt"]
         daily_pnl = ledger_summary["realized_pnl_usdt"]
+        fng_data = get_crypto_fear_and_greed()
+        fng_score = fng_data.get("value", 50)
 
         for cand in candidates:
             symbol = cand["symbol"]
             score = cand["conviction_score"]
             technicals = cand.get("technicals", {})
+            technicals["fear_and_greed_score"] = fng_score
+            technicals["funding_rate"] = get_binance_funding_rate(symbol)
             sweep = cand.get("liquidity_sweep")
 
             # Only consider high conviction setups (Score >= 70 or confirmed sweep)

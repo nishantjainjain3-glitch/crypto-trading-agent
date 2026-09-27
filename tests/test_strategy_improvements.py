@@ -66,3 +66,48 @@ def test_gatekeeper_vetoes_market_laggard():
     )
     assert not passed
     assert any("MARKET_LAGGARD" in v for v in vetoes)
+
+
+def test_gatekeeper_vetoes_overheated_funding():
+    gk = CryptoTradeGatekeeper()
+    technicals = {
+        "above_20_ema": True,
+        "rsi": 55.0,
+        "rvol": 1.5,
+        "funding_rate": 0.00045,  # 0.045% per 8h > 0.035% ceiling
+    }
+    passed, verdict, vetoes = gk.evaluate_candidate(
+        symbol="SOL/USDT",
+        direction="BUY",
+        entry_price=120.0,
+        stop_loss=118.0,
+        target_price=125.0,
+        technicals=technicals,
+        active_positions={},
+        daily_pnl_usd=0.0,
+    )
+    assert not passed
+    assert any("FUNDING_OVERHEATED" in v for v in vetoes)
+
+
+def test_gatekeeper_vetoes_extreme_greed():
+    gk = CryptoTradeGatekeeper()
+    technicals = {
+        "above_20_ema": True,
+        "rsi": 55.0,
+        "rvol": 1.5,
+        "fear_and_greed_score": 92,  # 92/100 Extreme Greed >= 88
+    }
+    passed, verdict, vetoes = gk.evaluate_candidate(
+        symbol="BTC/USDT",
+        direction="BUY",
+        entry_price=85000.0,
+        stop_loss=84000.0,
+        target_price=87000.0,
+        technicals=technicals,
+        active_positions={},
+        daily_pnl_usd=0.0,
+    )
+    assert not passed
+    assert any("EXTREME_GREED_EXHAUSTION" in v for v in vetoes)
+

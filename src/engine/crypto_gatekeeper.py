@@ -145,6 +145,20 @@ class CryptoTradeGatekeeper:
                 "MARKET_LAGGARD: Coin is underperforming Bitcoin by >1.5% over 24h. Weak momentum."
             )
 
+        # Gate 11: Perpetual Funding Overheating Guard (Leverage Trap)
+        funding_rate = technicals.get("funding_rate", 0.0)
+        if direction.upper() == "BUY" and funding_rate > 0.00035 and not is_liquidity_sweep:
+            veto_reasons.append(
+                f"FUNDING_OVERHEATED: Binance perpetual funding rate is {funding_rate * 100:.3f}% (> 0.035%). Overcrowded long leverage, cascade risk."
+            )
+
+        # Gate 12: Extreme Greed Sentiment Exhaustion Guard
+        fng_score = technicals.get("fear_and_greed_score", 50)
+        if direction.upper() == "BUY" and fng_score >= 88 and not is_liquidity_sweep:
+            veto_reasons.append(
+                f"EXTREME_GREED_EXHAUSTION: Crypto Fear & Greed Index is {fng_score}/100. High smart money distribution risk."
+            )
+
         passed = len(veto_reasons) == 0
         verdict = "APPROVED" if passed else "VETOED"
         return passed, verdict, veto_reasons

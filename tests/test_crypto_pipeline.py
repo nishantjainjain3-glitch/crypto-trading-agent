@@ -50,7 +50,7 @@ def test_gatekeeper_veto_logic():
     
     # Test 1: Low Reward-to-Risk (Entry 100, Stop 95, Target 105 -> RR 1.0 < 1.5)
     passed, verdict, vetoes = gate.evaluate_candidate(
-        symbol="SOL/USDT",
+        symbol="TEST/USDT",
         direction="BUY",
         entry_price=100.0,
         stop_loss=95.0,
@@ -64,7 +64,7 @@ def test_gatekeeper_veto_logic():
 
     # Test 2: Low Volume (RVOL 0.8 < 1.2)
     passed, verdict, vetoes = gate.evaluate_candidate(
-        symbol="SOL/USDT",
+        symbol="TEST/USDT",
         direction="BUY",
         entry_price=100.0,
         stop_loss=95.0,
@@ -78,7 +78,7 @@ def test_gatekeeper_veto_logic():
 
     # Test 3: Approved candidate (RR 2.0, RVOL 1.5, RSI 55)
     passed, verdict, vetoes = gate.evaluate_candidate(
-        symbol="SOL/USDT",
+        symbol="TEST/USDT",
         direction="BUY",
         entry_price=100.0,
         stop_loss=95.0,
