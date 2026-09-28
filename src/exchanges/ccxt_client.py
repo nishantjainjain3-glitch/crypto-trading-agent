@@ -258,6 +258,36 @@ class CryptoExchangeClient:
             "spread_bps": 10.0,
         }
 
+    def fetch_top_volume_pairs(self, limit: int = 10, quote: str = "USDT") -> List[str]:
+        """Freqtrade-style VolumePairList: dynamically select top liquid pairs by 24h quote volume."""
+        if not self.exchange:
+            return ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT"]
+        try:
+            tickers = self.exchange.fetch_tickers()
+            excluded_coins = {"USDC", "FDUSD", "TUSD", "BUSD", "DAI", "EUR", "AEUR", "USD1", "USDP"}
+            candidates = []
+            suffix = f"/{quote}"
+            for sym, t in tickers.items():
+                if not sym.endswith(suffix):
+                    continue
+                base = sym.split("/")[0]
+                if base in excluded_coins:
+                    continue
+                q_vol = float(t.get("quoteVolume", 0) or 0.0)
+                if q_vol > 5_000_000:  # Minimum $5M 24h volume for institutional liquidity
+                    candidates.append((sym, q_vol))
+            
+            candidates.sort(key=lambda x: x[1], reverse=True)
+            top_pairs = [c[0] for c in candidates[:limit]]
+            if f"BTC/{quote}" not in top_pairs and len(top_pairs) > 0:
+                top_pairs[0] = f"BTC/{quote}"
+            if f"ETH/{quote}" not in top_pairs and len(top_pairs) > 1:
+                top_pairs[1] = f"ETH/{quote}"
+            return top_pairs if top_pairs else ["BTC/USDT", "ETH/USDT", "SOL/USDT"]
+        except Exception as e:
+            logger.error(f"Error fetching top volume pairs: {e}")
+            return ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT"]
+
     def create_market_sell(self, symbol: str, amount: float) -> Dict[str, Any]:
         """Execute a market SELL order on Binance."""
         if not self.exchange:

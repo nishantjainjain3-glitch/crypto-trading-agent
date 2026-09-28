@@ -52,6 +52,24 @@ def test_crypto_stoploss_guard_triggers_lockout(tmp_path):
     assert "StoplossGuard" in reason
 
 
+def test_crypto_low_profit_pairs_triggers_lockout(tmp_path):
+    cd_file = str(tmp_path / "test_cooldowns.json")
+    mgr = CryptoProtectionManager(storage_path=cd_file)
+
+    # First negative trade: should NOT trigger lockout
+    locked1 = mgr.record_trade_result("LINK/USDT", net_pnl_usd=-0.10, pnl_pct=-0.6)
+    assert not locked1
+    in_cd, _ = mgr.is_in_cooldown("LINK/USDT")
+    assert not in_cd
+
+    # Second negative trade in 24h: SHOULD trigger LowProfitPairs lockout
+    locked2 = mgr.record_trade_result("LINK/USDT", net_pnl_usd=-0.05, pnl_pct=-0.3)
+    assert locked2
+    in_cd, reason = mgr.is_in_cooldown("LINK/USDT")
+    assert in_cd
+    assert "LowProfitPairs" in reason
+
+
 def test_protections_max_drawdown_guard(tmp_path):
     cd_file = str(tmp_path / "test_cooldowns.json")
     mgr = CryptoProtectionManager(storage_path=cd_file)

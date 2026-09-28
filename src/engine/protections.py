@@ -146,6 +146,48 @@ class CryptoProtectionManager:
             return True
         return False
 
+    def record_trade_result(self, symbol: str, net_pnl_usd: float, pnl_pct: float) -> bool:
+        """
+        Freqtrade LowProfitPairs Protection.
+        If a symbol produces 2 consecutive losing/sub-zero trades within 24 hours,
+        locks the symbol for 24 hours to prevent repeated adverse regime bleeding.
+        """
+        clean_sym = symbol.upper()
+        now = datetime.now(timezone.utc)
+        data = self._load_data()
+        trade_results = data.get("trade_results", [])
+        trade_results.append({
+            "symbol": clean_sym,
+            "net_pnl_usd": net_pnl_usd,
+            "pnl_pct": pnl_pct,
+            "timestamp": now.isoformat(),
+        })
+
+        cutoff = now - timedelta(hours=24)
+        recent_trades = []
+        for t in trade_results:
+            if t.get("symbol") == clean_sym:
+                try:
+                    ts = datetime.fromisoformat(t["timestamp"])
+                    if ts.tzinfo is None:
+                        ts = ts.replace(tzinfo=timezone.utc)
+                    if ts >= cutoff:
+                        recent_trades.append(t)
+                except Exception:
+                    pass
+
+        data["trade_results"] = trade_results[-100:]
+        self._save_data(data)
+
+        if len(recent_trades) >= 2 and all(t.get("net_pnl_usd", 0.0) <= 0.0 for t in recent_trades[-2:]):
+            self.set_cooldown(
+                symbol=clean_sym,
+                hours=24.0,
+                reason=f"LowProfitPairs: 2 consecutive negative trades in last 24h",
+            )
+            return True
+        return False
+
     def evaluate_entry_protections(
         self,
         symbol: str,

@@ -272,6 +272,9 @@ class CryptoPaperTrader:
         if reason == "STOP_LOSS_HIT":
             self.protections.record_stoploss_hit(symbol, actual_exit_p, pnl_pct)
 
+        # Freqtrade LowProfitPairs: record every trade result to catch persistent negative drift
+        self.protections.record_trade_result(symbol, net_pnl, pnl_pct)
+
         total_t = self.ledger["total_trades"]
         self.ledger["win_rate_pct"] = round((self.ledger["winning_trades"] / total_t) * 100, 2) if total_t else 0.0
 

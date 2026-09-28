@@ -39,6 +39,17 @@ class CryptoScanner:
         self.client = exchange_client or CryptoExchangeClient()
         self.watchlist = watchlist or DEFAULT_WATCHLIST
 
+    def refresh_volume_watchlist(self, top_n: int = 10) -> List[str]:
+        """Freqtrade-style VolumePairList: refreshes watchlist with top liquid volume pairs."""
+        try:
+            top_pairs = self.client.fetch_top_volume_pairs(limit=top_n)
+            if top_pairs and len(top_pairs) >= 3:
+                self.watchlist = top_pairs
+                logger.info(f"Updated dynamic volume watchlist (top {len(top_pairs)}): {self.watchlist}")
+        except Exception as e:
+            logger.warning(f"Failed to refresh dynamic volume watchlist: {e}")
+        return self.watchlist
+
     def scan_symbol(self, symbol: str, timeframe: str = "1h") -> Dict[str, Any]:
         """Perform comprehensive technical, order flow, and order book scan for a single symbol."""
         ticker = self.client.fetch_ticker(symbol)

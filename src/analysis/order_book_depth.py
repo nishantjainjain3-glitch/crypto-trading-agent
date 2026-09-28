@@ -11,13 +11,13 @@ def analyze_order_book_depth(
     client: Optional[CryptoExchangeClient],
     symbol: str,
     limit: int = 20,
-    max_spread_bps: float = 35.0,
+    max_spread_bps: float = 18.0,
     min_imbalance_ratio: float = 0.65,
 ) -> Dict[str, Any]:
     """
     Analyzes Level 2 order book depth from Binance via CCXT.
     - Bid/Ask imbalance ratio (>1.5 = buyer dominance; <0.67 = heavy seller resistance)
-    - Spread in basis points (spread_bps > 35 = illiquid or high slippage risk)
+    - Freqtrade SpreadFilter: spread_bps > 18.0 (0.18%) vetoes entry to eliminate slippage
     - Large wall detection (single level quantity > 3.0x average size)
     """
     if client is None or getattr(client, "exchange", None) is None:
