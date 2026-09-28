@@ -57,8 +57,12 @@ class PositionSizer:
             stop_distance = min_stop_distance
             logger.info(f"{symbol}: Stop distance too tight, expanded to {stop_distance:.4f}")
 
-        # Raw quantity
-        raw_quantity = dollar_risk_target / stop_distance
+        # Jesse-style fee absorption: risk per unit includes round-trip exchange fees
+        fee_rate = 0.00075  # 0.075% Binance taker fee with BNB
+        unit_risk = stop_distance + (entry_price * fee_rate) + (stop_loss * fee_rate)
+
+        # Raw quantity guaranteed not to breach risk budget on stop-out
+        raw_quantity = dollar_risk_target / unit_risk
         gross_capital = raw_quantity * entry_price
 
         # Cap at max allocation per position (allow up to 95% for accounts <= 25 to satisfy minNotional)

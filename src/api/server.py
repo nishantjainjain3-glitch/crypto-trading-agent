@@ -122,6 +122,20 @@ def get_portfolio_risk():
     engine = PortfolioRiskEngine(returns)
     return engine.compute_all_metrics()
 
+@app.get("/api/monte-carlo")
+def get_monte_carlo_analysis(simulations: int = 1000):
+    """Stress-test strategy trades with Jesse-style Monte Carlo permutation simulations."""
+    from src.analysis.monte_carlo import run_monte_carlo_simulation
+    paper_trader.history = paper_trader._load_history()
+    history = paper_trader.history
+    pnls_pct = [t.get("pnl_pct", 0.0) for t in history]
+    initial_cap = float(paper_trader.ledger.get("current_investment_baseline_usdt", 18.0))
+    return run_monte_carlo_simulation(
+        trade_pnls_pct=pnls_pct,
+        initial_equity=initial_cap,
+        num_simulations=simulations,
+    )
+
 @app.get("/api/smart-money")
 def get_smart_money_signals(chain: str = "56"):
     """Fetch Binance Web3 live smart-money wallet signals and top inflows."""
