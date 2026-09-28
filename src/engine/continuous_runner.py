@@ -58,6 +58,16 @@ class ContinuousCryptoRunner:
             "vetoed_candidates": [],
         }
 
+        # Step 0: Periodically refresh Freqtrade-style VolumePairList (every 30 minutes)
+        if time.time() - getattr(self, "last_watchlist_refresh", 0.0) > 1800:
+            try:
+                new_wl = self.scanner.refresh_volume_watchlist(top_n=10)
+                if new_wl and len(new_wl) >= 3:
+                    self.watchlist = new_wl
+                    self.last_watchlist_refresh = time.time()
+            except Exception as e:
+                logger.debug(f"Dynamic watchlist refresh error: {e}")
+
         # Step 1: Fetch current market prices for active positions and watchlist
         active_symbols = list(self.paper_trader.positions.keys())
         symbols_to_price = list(set(self.watchlist + active_symbols))
