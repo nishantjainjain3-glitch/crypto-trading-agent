@@ -119,9 +119,11 @@ class ContinuousCryptoRunner:
             technicals["fear_and_greed_score"] = fng_score
             technicals["funding_rate"] = get_binance_funding_rate(symbol)
             sweep = cand.get("liquidity_sweep")
+            dip = cand.get("dip_signal")
+            has_dip = bool(dip and dip.get("is_valid_dip"))
 
-            # Only consider high conviction setups (Score >= 70 or confirmed sweep)
-            if score < 70 and not sweep:
+            # Only consider high conviction setups (Score >= 70, confirmed sweep, or valid dip buy)
+            if score < 70 and not sweep and not has_dip:
                 continue
 
             direction = "BUY"
@@ -139,6 +141,9 @@ class ContinuousCryptoRunner:
             if sweep:
                 stop_loss = sweep["stop_loss"]
                 target_price = sweep["target_price"]
+            elif has_dip:
+                stop_loss = dip["stop_loss"]
+                target_price = dip["target_price"]
             else:
                 # Swing setup: minimum target of 4.5% (or 3.5 * ATR), stop distance between 1.5% and 2.2%
                 stop_dist = max(entry_price * 0.015, min(entry_price * 0.022, 1.5 * atr))

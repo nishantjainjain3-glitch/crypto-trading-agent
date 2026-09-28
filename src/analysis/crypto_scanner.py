@@ -10,6 +10,7 @@ from src.analysis.liquidity_sweep import detect_liquidity_sweep
 from src.analysis.order_flow import analyze_order_flow
 from src.analysis.order_book_depth import analyze_order_book_depth
 from src.analysis.smart_money_signals import analyze_smart_money_backing
+from src.analysis.dip_analyser import analyze_dip_setup
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +140,13 @@ class CryptoScanner:
             score -= 10
             bearish_factors.append(f"Smart Money exit risk: {smart_money.get('exit_rate_pct')}% of tracked whales exited")
 
+        # OctoBot Dip Analyser Confluence
+        htf_bull = technicals.get("htf_bullish", True)
+        dip_signal = analyze_dip_setup(df, technicals, htf_bullish=htf_bull, symbol=symbol)
+        if dip_signal.get("is_valid_dip"):
+            score += dip_signal.get("score_boost", 15)
+            bullish_factors.append(dip_signal["rationale"])
+
         score = max(5, min(95, score))
         verdict = (
             "STRONG_BUY"
@@ -156,6 +164,7 @@ class CryptoScanner:
             "verdict": verdict,
             "technicals": technicals,
             "liquidity_sweep": sweep_signal,
+            "dip_signal": dip_signal,
             "order_flow": order_flow,
             "order_book": order_book,
             "smart_money": smart_money,
