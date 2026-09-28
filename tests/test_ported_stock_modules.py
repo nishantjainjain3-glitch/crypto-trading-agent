@@ -126,16 +126,16 @@ def test_order_book_depth_mock():
 
 
 def test_decaying_minimal_roi_exit():
-    # Hour 1: Gain +2.3% exceeds early +2.2% target -> Exit
-    e1 = evaluate_minimal_roi_exit(entry_price=100.0, current_price=102.3, holding_hours=1.0)
+    # Hour 1: Gain +5.6% exceeds early +5.5% target -> Exit
+    e1 = evaluate_minimal_roi_exit(entry_price=100.0, current_price=105.6, holding_hours=1.0)
     assert e1["should_exit"] is True
 
-    # Hour 1: Gain +1.5% below early +2.2% target -> Hold
-    e2 = evaluate_minimal_roi_exit(entry_price=100.0, current_price=101.5, holding_hours=1.0)
+    # Hour 1: Gain +2.5% below early +5.5% target -> Hold
+    e2 = evaluate_minimal_roi_exit(entry_price=100.0, current_price=102.5, holding_hours=1.0)
     assert e2["should_exit"] is False
 
-    # Hour 4: Target decayed to +1.4%. Gain +1.5% now exceeds target -> Exit
-    e3 = evaluate_minimal_roi_exit(entry_price=100.0, current_price=101.5, holding_hours=4.0)
+    # Hour 30: Target decayed to +3.0%. Gain +3.2% now exceeds target -> Exit
+    e3 = evaluate_minimal_roi_exit(entry_price=100.0, current_price=103.2, holding_hours=30.0)
     assert e3["should_exit"] is True
 
 

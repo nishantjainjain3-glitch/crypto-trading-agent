@@ -140,8 +140,11 @@ class ContinuousCryptoRunner:
                 stop_loss = sweep["stop_loss"]
                 target_price = sweep["target_price"]
             else:
-                stop_loss = round(entry_price - (1.5 * atr), 4) if direction == "BUY" else round(entry_price + (1.5 * atr), 4)
-                target_price = round(entry_price + (3.0 * atr), 4) if direction == "BUY" else round(entry_price - (3.0 * atr), 4)
+                # Swing setup: minimum target of 4.5% (or 3.5 * ATR), stop distance between 1.5% and 2.2%
+                stop_dist = max(entry_price * 0.015, min(entry_price * 0.022, 1.5 * atr))
+                target_dist = max(entry_price * 0.045, max(stop_dist * 2.5, 3.5 * atr))
+                stop_loss = round(entry_price - stop_dist, 4) if direction == "BUY" else round(entry_price + stop_dist, 4)
+                target_price = round(entry_price + target_dist, 4) if direction == "BUY" else round(entry_price - target_dist, 4)
 
             # Pass through gatekeeper
             peak_equity = self.paper_trader.ledger.get("peak_equity_usdt", current_equity)

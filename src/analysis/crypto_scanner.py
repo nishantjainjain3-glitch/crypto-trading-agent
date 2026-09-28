@@ -38,7 +38,7 @@ class CryptoScanner:
         self.client = exchange_client or CryptoExchangeClient()
         self.watchlist = watchlist or DEFAULT_WATCHLIST
 
-    def scan_symbol(self, symbol: str, timeframe: str = "15m") -> Dict[str, Any]:
+    def scan_symbol(self, symbol: str, timeframe: str = "1h") -> Dict[str, Any]:
         """Perform comprehensive technical, order flow, and order book scan for a single symbol."""
         ticker = self.client.fetch_ticker(symbol)
         df = self.client.fetch_ohlcv(symbol, timeframe=timeframe, limit=100)
@@ -88,23 +88,23 @@ class CryptoScanner:
                 score -= 15
                 bearish_factors.append(sweep_signal["rationale"])
 
-        # Higher Timeframe (1H) Trend Confirmation
+        # Higher Timeframe (4H) Trend Confirmation
         try:
-            df_1h = self.client.fetch_ohlcv(symbol, timeframe="1h", limit=60)
-            if not df_1h.empty and len(df_1h) >= 20:
-                span_len = min(50, len(df_1h))
-                ema50_1h = df_1h["close"].ewm(span=span_len, adjust=False).mean().iloc[-1]
-                last_1h_close = df_1h["close"].iloc[-1]
-                htf_bullish = bool(last_1h_close > ema50_1h)
+            df_4h = self.client.fetch_ohlcv(symbol, timeframe="4h", limit=60)
+            if not df_4h.empty and len(df_4h) >= 20:
+                span_len = min(50, len(df_4h))
+                ema50_4h = df_4h["close"].ewm(span=span_len, adjust=False).mean().iloc[-1]
+                last_4h_close = df_4h["close"].iloc[-1]
+                htf_bullish = bool(last_4h_close > ema50_4h)
                 technicals["htf_bullish"] = htf_bullish
                 if htf_bullish:
                     score += 10
-                    bullish_factors.append("Higher Timeframe (1H) Bullish Alignment: Price above 1H 50 EMA")
+                    bullish_factors.append("Higher Timeframe (4H) Bullish Alignment: Price above 4H 50 EMA")
                 else:
                     score -= 15
-                    bearish_factors.append("Higher Timeframe (1H) Headwind: Price below 1H 50 EMA")
+                    bearish_factors.append("Higher Timeframe (4H) Headwind: Price below 4H 50 EMA")
         except Exception as e:
-            logger.debug(f"1H trend check failed for {symbol}: {e}")
+            logger.debug(f"4H trend check failed for {symbol}: {e}")
 
         # Order Flow & Smart Money Confluence
         if order_flow:
@@ -163,7 +163,7 @@ class CryptoScanner:
             "bearish_factors": bearish_factors,
         }
 
-    def scan_watchlist(self, timeframe: str = "15m") -> List[Dict[str, Any]]:
+    def scan_watchlist(self, timeframe: str = "1h") -> List[Dict[str, Any]]:
         """Scan entire watchlist and rank opportunities using Relative Strength vs BTC."""
         results = []
         for symbol in self.watchlist:
@@ -197,6 +197,6 @@ class CryptoScanner:
         results.sort(key=lambda x: x["conviction_score"], reverse=True)
         return results
 
-    def scan_all(self, timeframe: str = "15m") -> List[Dict[str, Any]]:
+    def scan_all(self, timeframe: str = "1h") -> List[Dict[str, Any]]:
         """Alias for scan_watchlist for backwards compatibility."""
         return self.scan_watchlist(timeframe=timeframe)

@@ -3,10 +3,10 @@
 from typing import Dict, Any, Optional
 
 DEFAULT_CRYPTO_ROI_TABLE: Dict[int, float] = {
-    0: 2.2,  # Hours 0 - 2: Full breakout target (+2.2%)
-    2: 1.4,  # Hours 2 - 6: Standard swing target (+1.4%)
-    6: 0.8,  # Hours 6 - 12: Decaying target (+0.8%)
-    12: 0.5, # Hours 12+: Free stagnant capital (+0.5%, well above 0.15% roundtrip taker fees)
+    0: 5.5,   # Hours 0 - 12: Trend expansion target (+5.5%)
+    12: 4.0,  # Hours 12 - 24: Secondary swing target (+4.0%)
+    24: 3.0,  # Hours 24 - 48: Core swing target (+3.0%)
+    48: 2.0,  # Hours 48+: Minimum target floor (+2.0%, >10x Binance taker fees)
 }
 
 def evaluate_minimal_roi_exit(
@@ -30,7 +30,7 @@ def evaluate_minimal_roi_exit(
     table = roi_table or DEFAULT_CRYPTO_ROI_TABLE
     current_profit_pct = round(((current_price - entry_price) / entry_price) * 100, 2)
 
-    active_target = 2.2
+    active_target = 5.5
     for hr_threshold in sorted(table.keys(), reverse=True):
         if holding_hours >= hr_threshold:
             active_target = table[hr_threshold]
@@ -57,9 +57,9 @@ def compute_crypto_trailing_stop(
     highest_price: float,
     initial_stop_loss: float,
     atr: float,
-    breakeven_threshold_atr: float = 0.5,
-    trailing_activation_atr: float = 1.75,
-    trailing_distance_atr: float = 1.0,
+    breakeven_threshold_atr: float = 1.2,
+    trailing_activation_atr: float = 2.0,
+    trailing_distance_atr: float = 1.2,
 ) -> Dict[str, Any]:
     """Calculates updated dynamic stop loss, breakeven trigger, and trailing stop levels."""
     if entry_price <= 0:
@@ -76,7 +76,8 @@ def compute_crypto_trailing_stop(
         trail_level = round(peak - (trailing_distance_atr * atr), 6)
         effective_stop = max(effective_stop, trail_level)
     elif breakeven_active:
-        be_level = round(entry_price * 1.0008, 6)
+        # Breakeven stop set to +0.35% above entry to guarantee net profit after exchange fees
+        be_level = round(entry_price * 1.0035, 6)
         effective_stop = max(effective_stop, be_level)
 
     return {
