@@ -94,11 +94,18 @@ class CryptoTradeGatekeeper:
                     f"INSUFFICIENT_RR: Reward-to-Risk {rr_ratio:.2f} < {self.min_reward_to_risk:.2f} minimum required."
                 )
 
-        # Gate 4: Relative Volume (RVOL)
+        # Gate 4: Relative Volume (RVOL) with Dynamic Learned Threshold
+        try:
+            from src.engine.crypto_autopsy_engine import load_adaptive_hyperparams
+            learned = load_adaptive_hyperparams()
+            effective_min_rvol = float(learned.get("min_rvol_ratio", self.min_rvol))
+        except Exception:
+            effective_min_rvol = self.min_rvol
+
         rvol = technicals.get("rvol", 1.0)
-        if rvol < self.min_rvol:
+        if rvol < effective_min_rvol:
             veto_reasons.append(
-                f"INSUFFICIENT_VOLUME: Relative volume {rvol:.2f}x < {self.min_rvol:.2f}x threshold."
+                f"INSUFFICIENT_VOLUME: Relative volume {rvol:.2f}x < {effective_min_rvol:.2f}x learned threshold."
             )
 
         # Gate 5: Trend & Regime Filter

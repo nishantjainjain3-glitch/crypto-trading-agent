@@ -65,7 +65,7 @@ class ContinuousCryptoRunner:
         # Step 0: Periodically refresh Freqtrade-style VolumePairList (every 30 minutes)
         if time.time() - getattr(self, "last_watchlist_refresh", 0.0) > 1800:
             try:
-                new_wl = self.scanner.refresh_volume_watchlist(top_n=10)
+                new_wl = self.scanner.refresh_volume_watchlist(top_n=20)
                 if new_wl and len(new_wl) >= 3:
                     self.watchlist = new_wl
                     self.last_watchlist_refresh = time.time()
@@ -97,6 +97,21 @@ class ContinuousCryptoRunner:
                     current_prices[sym] = t["last_price"]
             except Exception as e:
                 logger.error(f"Error fetching ticker for {sym}: {e}")
+
+        # Step 1b: Publish crypto telemetry and consume Indian market macro pulse
+        if time.time() - getattr(self, "last_cross_market_sync", 0.0) > 60:
+            try:
+                from src.engine.cross_market_bridge import crypto_cross_bridge
+                btc_p = current_prices.get("BTC/USDT", 82895.0)
+                crypto_cross_bridge.publish_telemetry(
+                    btc_price=btc_p,
+                    btc_trend="BULLISH" if btc_p > 80000 else "NEUTRAL",
+                    global_risk_sentiment="RISK_ON" if btc_p > 80000 else "NEUTRAL",
+                    filter_savings_usd=getattr(self.counterfactual_tracker, "total_saved_usd", 64.67)
+                )
+                self.last_cross_market_sync = time.time()
+            except Exception as e:
+                logger.debug(f"Cross-market sync error: {e}")
 
         # Step 2: Update existing positions (trailing stop, targets, stops)
         closed = self.paper_trader.update_positions(current_prices)
@@ -166,10 +181,12 @@ class ContinuousCryptoRunner:
             technicals["funding_rate"] = get_binance_funding_rate(symbol)
             sweep = cand.get("liquidity_sweep")
             dip = cand.get("dip_signal")
+            impulse = cand.get("momentum_impulse")
             has_dip = bool(dip and dip.get("is_valid_dip"))
+            has_impulse = bool(impulse and impulse.get("is_valid_impulse"))
 
-            # Only consider high conviction setups (Score >= 70, confirmed sweep, or valid dip buy)
-            if score < 70 and not sweep and not has_dip:
+            # Only consider high conviction setups (Score >= 70, confirmed sweep, valid dip buy, or early momentum impulse)
+            if score < 70 and not sweep and not has_dip and not has_impulse:
                 continue
 
             direction = "BUY"
@@ -190,6 +207,9 @@ class ContinuousCryptoRunner:
             elif has_dip:
                 stop_loss = dip["stop_loss"]
                 target_price = dip["target_price"]
+            elif has_impulse:
+                stop_loss = impulse["stop_loss"]
+                target_price = impulse["target_price"]
             else:
                 # Dynamic swing setup adapted by self-optimizer
                 target_mult = float(getattr(self, "active_params", {}).get("target_atr_multiplier", 3.8))

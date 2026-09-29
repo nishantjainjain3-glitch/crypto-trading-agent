@@ -57,19 +57,39 @@ def compute_crypto_trailing_stop(
     highest_price: float,
     initial_stop_loss: float,
     atr: float,
-    breakeven_threshold_atr: float = 1.2,
-    trailing_activation_atr: float = 2.0,
-    trailing_distance_atr: float = 1.2,
+    breakeven_threshold_atr: Optional[float] = None,
+    trailing_activation_atr: Optional[float] = None,
+    trailing_distance_atr: Optional[float] = None,
 ) -> Dict[str, Any]:
-    """Calculates updated dynamic stop loss, breakeven trigger, and trailing stop levels."""
     if entry_price <= 0:
         return {"effective_stop": initial_stop_loss, "breakeven_active": False, "trailing_active": False}
+
+    be_mult = breakeven_threshold_atr
+    dist_mult = trailing_distance_atr
+    act_mult = trailing_activation_atr
+
+    try:
+        from src.engine.crypto_autopsy_engine import load_adaptive_hyperparams
+        learned = load_adaptive_hyperparams()
+        if be_mult is None and "breakeven_atr_mult" in learned:
+            be_mult = float(learned["breakeven_atr_mult"])
+        if dist_mult is None and "trailing_stop_atr_mult" in learned:
+            dist_mult = float(learned["trailing_stop_atr_mult"])
+    except Exception:
+        pass
+
+    if be_mult is None:
+        be_mult = 1.0
+    if dist_mult is None:
+        dist_mult = 1.2
+    if act_mult is None:
+        act_mult = 2.0
 
     peak = max(highest_price, current_price, entry_price)
     profit = peak - entry_price
 
-    breakeven_active = profit >= (breakeven_threshold_atr * atr)
-    trailing_active = profit >= (trailing_activation_atr * atr)
+    breakeven_active = profit >= (be_mult * atr)
+    trailing_active = profit >= (act_mult * atr)
 
     effective_stop = initial_stop_loss
     if trailing_active:

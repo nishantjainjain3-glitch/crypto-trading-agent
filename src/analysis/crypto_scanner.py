@@ -11,6 +11,7 @@ from src.analysis.order_flow import analyze_order_flow
 from src.analysis.order_book_depth import analyze_order_book_depth
 from src.analysis.smart_money_signals import analyze_smart_money_backing
 from src.analysis.dip_analyser import analyze_dip_setup
+from src.analysis.momentum_impulse import detect_momentum_impulse
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class CryptoScanner:
         self.client = exchange_client or CryptoExchangeClient()
         self.watchlist = watchlist or DEFAULT_WATCHLIST
 
-    def refresh_volume_watchlist(self, top_n: int = 10) -> List[str]:
+    def refresh_volume_watchlist(self, top_n: int = 20) -> List[str]:
         """Freqtrade-style VolumePairList: refreshes watchlist with top liquid volume pairs."""
         try:
             top_pairs = self.client.fetch_top_volume_pairs(limit=top_n)
@@ -158,6 +159,19 @@ class CryptoScanner:
             score += dip_signal.get("score_boost", 15)
             bullish_factors.append(dip_signal["rationale"])
 
+        # Early Momentum Impulse Confluence
+        change_24h = ticker.get("change_24h_pct", 0.0)
+        impulse_signal = detect_momentum_impulse(
+            df=df,
+            technicals=technicals,
+            change_24h_pct=change_24h,
+            htf_bullish=htf_bull,
+            symbol=symbol,
+        )
+        if impulse_signal.get("is_valid_impulse"):
+            score += impulse_signal.get("score_boost", 25)
+            bullish_factors.append(impulse_signal["rationale"])
+
         score = max(5, min(95, score))
         verdict = (
             "STRONG_BUY"
@@ -168,7 +182,7 @@ class CryptoScanner:
         return {
             "symbol": symbol,
             "last_price": ticker.get("last_price", 0.0),
-            "change_24h_pct": ticker.get("change_24h_pct", 0.0),
+            "change_24h_pct": change_24h,
             "volume_24h": ticker.get("volume_24h", 0.0),
             "quote_volume_24h": ticker.get("quote_volume_24h", 0.0),
             "conviction_score": score,
@@ -176,6 +190,7 @@ class CryptoScanner:
             "technicals": technicals,
             "liquidity_sweep": sweep_signal,
             "dip_signal": dip_signal,
+            "momentum_impulse": impulse_signal,
             "order_flow": order_flow,
             "order_book": order_book,
             "smart_money": smart_money,

@@ -319,6 +319,12 @@ class CryptoPaperTrader:
         self._save_positions()
         self._save_history()
 
+        try:
+            from src.engine.crypto_autopsy_engine import run_crypto_forensic_autopsy_cycle
+            run_crypto_forensic_autopsy_cycle()
+        except Exception as e_autopsy:
+            logger.warning(f"Could not run autopsy cycle: {e_autopsy}")
+
         logger.info(f"Closed {symbol} trade: PnL ${net_pnl:.2f} ({pnl_pct}%) - Reason: {reason}")
         return trade_record
 
