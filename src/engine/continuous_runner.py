@@ -68,6 +68,19 @@ class ContinuousCryptoRunner:
             except Exception as e:
                 logger.debug(f"Dynamic watchlist refresh error: {e}")
 
+        # Step 0b: Synchronize liquid cash with Binance live balance when 0 open positions
+        if self.is_live and len(self.paper_trader.positions) == 0:
+            try:
+                bal = self.client.fetch_balance()
+                live_cash = bal.get("free", {}).get("USDT", 0.0)
+                if live_cash > 0 and abs(self.paper_trader.ledger.get("virtual_cash_usdt", 0.0) - live_cash) > 0.01:
+                    self.paper_trader.ledger["virtual_cash_usdt"] = live_cash
+                    self.paper_trader.ledger["current_investment_baseline_usdt"] = round(live_cash, 2)
+                    self.paper_trader._save_ledger()
+                    logger.info(f"Synchronized ledger with updated Binance free cash: ${live_cash:.2f} USDT")
+            except Exception as e:
+                logger.debug(f"Live cash sync error: {e}")
+
         # Step 1: Fetch current market prices for active positions and watchlist
         active_symbols = list(self.paper_trader.positions.keys())
         symbols_to_price = list(set(self.watchlist + active_symbols))
