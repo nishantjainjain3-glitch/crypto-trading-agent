@@ -1,0 +1,68 @@
+[
+  {
+    "timestamp": "2026-09-29 03:17:24 UTC",
+    "market_regime": "NORMAL_VOLATILITY",
+    "avg_atr_pct": 2.2,
+    "applied_rvol": 1.1,
+    "target_atr_multiplier": 3.8,
+    "min_target_pct": 4.5,
+    "stop_pct": 1.8,
+    "gates_evaluated": 6,
+    "gate_audit": {
+      "COOLDOWN_ACTIVE": {
+        "vetoes_count": 0,
+        "saved_loss_usd": 0.0,
+        "missed_profit_usd": 0.0,
+        "net_benefit_usd": 0.0,
+        "efficiency_pct": 100.0,
+        "health": "HEALTHY_PROTECTION",
+        "action": "MAINTAIN"
+      },
+      "INSUFFICIENT_VOLUME": {
+        "vetoes_count": 0,
+        "saved_loss_usd": 0.0,
+        "missed_profit_usd": 0.0,
+        "net_benefit_usd": 0.0,
+        "efficiency_pct": 100.0,
+        "health": "HEALTHY_PROTECTION",
+        "action": "MAINTAIN"
+      },
+      "ORDER_BOOK_GUARD": {
+        "vetoes_count": 0,
+        "saved_loss_usd": 0.0,
+        "missed_profit_usd": 0.0,
+        "net_benefit_usd": 0.0,
+        "efficiency_pct": 100.0,
+        "health": "HEALTHY_PROTECTION",
+        "action": "MAINTAIN"
+      },
+      "MARKET_LAGGARD": {
+        "vetoes_count": 0,
+        "saved_loss_usd": 0.0,
+        "missed_profit_usd": 0.0,
+        "net_benefit_usd": 0.0,
+        "efficiency_pct": 100.0,
+        "health": "HEALTHY_PROTECTION",
+        "action": "MAINTAIN"
+      },
+      "RSI_OVERBOUGHT": {
+        "vetoes_count": 0,
+        "saved_loss_usd": 0.0,
+        "missed_profit_usd": 0.0,
+        "net_benefit_usd": 0.0,
+        "efficiency_pct": 100.0,
+        "health": "HEALTHY_PROTECTION",
+        "action": "MAINTAIN"
+      },
+      "MAX_DRAWDOWN_GUARD": {
+        "vetoes_count": 0,
+        "saved_loss_usd": 0.0,
+        "missed_profit_usd": 0.0,
+        "net_benefit_usd": 0.0,
+        "efficiency_pct": 100.0,
+        "health": "HEALTHY_PROTECTION",
+        "action": "MAINTAIN"
+      }
+    }
+  }
+]

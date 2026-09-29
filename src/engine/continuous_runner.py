@@ -12,6 +12,7 @@ from src.engine.crypto_gatekeeper import CryptoTradeGatekeeper
 from src.engine.crypto_paper_trader import CryptoPaperTrader
 from src.engine.counterfactual_tracker import CounterfactualTracker
 from src.analysis.sentiment_service import get_crypto_fear_and_greed, get_binance_funding_rate
+from src.engine.self_optimizer import SelfOptimizationEngine
 from src.notifications.telegram import TelegramNotifier
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,9 @@ class ContinuousCryptoRunner:
             attribution_path=os.path.join(data_dir, "gatekeeper_attribution.json"),
         )
         self.position_sizer = PositionSizer()
+        self.self_optimizer = SelfOptimizationEngine(data_dir=data_dir)
+        self.active_params = self.self_optimizer.run_optimization_cycle(gatekeeper=self.gatekeeper)
+        self.last_self_optimization_time = time.time()
         self.notifier = TelegramNotifier()
         self.is_live = os.getenv("LIVE_EXECUTION_ENABLED", "false").lower() == "true"
         if self.is_live and self.client.exchange:
@@ -130,6 +134,23 @@ class ContinuousCryptoRunner:
         # Step 3: Run full scanner on watchlist
         candidates = self.scanner.scan_all()
 
+        # Step 3b: Periodic self-optimization adaptation (every 2 hours)
+        if time.time() - getattr(self, "last_self_optimization_time", 0.0) > 7200:
+            try:
+                tech_list = [c.get("technicals", {}) for c in candidates if c.get("technicals")]
+                self.active_params = self.self_optimizer.run_optimization_cycle(
+                    gatekeeper=self.gatekeeper,
+                    technicals_list=tech_list,
+                )
+                self.last_self_optimization_time = time.time()
+                logger.info(
+                    f"Self-Optimization update: Regime={self.active_params.get('market_regime')}, "
+                    f"Target ATR Mult={self.active_params.get('target_atr_multiplier')}x, "
+                    f"Gatekeeper min_rvol={self.gatekeeper.min_rvol}x"
+                )
+            except Exception as e:
+                logger.debug(f"Self-optimizer adaptation error: {e}")
+
         # Step 4: Evaluate candidates through gatekeeper
         ledger_summary = self.paper_trader.get_portfolio_summary(current_prices)
         current_equity = ledger_summary["total_equity_usdt"]
@@ -170,9 +191,11 @@ class ContinuousCryptoRunner:
                 stop_loss = dip["stop_loss"]
                 target_price = dip["target_price"]
             else:
-                # Swing setup: minimum target of 4.5% (or 3.5 * ATR), stop distance between 1.5% and 2.2%
+                # Dynamic swing setup adapted by self-optimizer
+                target_mult = float(getattr(self, "active_params", {}).get("target_atr_multiplier", 3.8))
+                min_target_pct = float(getattr(self, "active_params", {}).get("min_target_pct", 4.5)) / 100.0
                 stop_dist = max(entry_price * 0.015, min(entry_price * 0.022, 1.5 * atr))
-                target_dist = max(entry_price * 0.045, max(stop_dist * 2.5, 3.5 * atr))
+                target_dist = max(entry_price * min_target_pct, max(stop_dist * 2.5, target_mult * atr))
                 stop_loss = round(entry_price - stop_dist, 4) if direction == "BUY" else round(entry_price + stop_dist, 4)
                 target_price = round(entry_price + target_dist, 4) if direction == "BUY" else round(entry_price - target_dist, 4)
 

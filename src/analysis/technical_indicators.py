@@ -96,8 +96,26 @@ def compute_all_technicals(df: pd.DataFrame) -> Dict[str, Any]:
     current_atr = float(atr_series.iloc[-1]) if not atr_series.isna().iloc[-1] else (current_close * 0.02)
     
     # RVOL (Relative Volume vs 20-period average)
-    vol_sma20 = float(volume.rolling(20).mean().iloc[-1]) if len(volume) >= 20 else current_volume
-    rvol = round(current_volume / (vol_sma20 + 1e-9), 2)
+    if len(volume) >= 2:
+        vol_completed = float(volume.iloc[-2])
+        vol_sma20_completed = float(volume.iloc[:-1].rolling(20, min_periods=5).mean().iloc[-1])
+        rvol_completed = vol_completed / (vol_sma20_completed + 1e-9)
+
+        rvol_projected = 0.0
+        if "timestamp" in df.columns:
+            try:
+                import time
+                now_ms = time.time() * 1000
+                start_ms = float(df["timestamp"].iloc[-1])
+                elapsed_hours = max(0.05, min(1.0, (now_ms - start_ms) / 3600000.0))
+                projected_vol = current_volume / elapsed_hours
+                rvol_projected = projected_vol / (vol_sma20_completed + 1e-9)
+            except Exception:
+                pass
+        rvol = round(max(rvol_completed, rvol_projected), 2)
+    else:
+        vol_sma20 = float(volume.rolling(20).mean().iloc[-1]) if len(volume) >= 20 else current_volume
+        rvol = round(current_volume / (vol_sma20 + 1e-9), 2)
     
     # Bollinger Bands
     bb = calculate_bollinger_bands(close, 20, 2.0)

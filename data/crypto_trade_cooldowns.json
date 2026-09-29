@@ -1,24 +1,10 @@
 {
   "cooldowns": {
-    "DOGE/USDT": {
-      "symbol": "DOGE/USDT",
-      "reason": "StoplossGuard: 2 stop-loss hits in last 48 hours (Whipsaw Protection)",
-      "created_at": "2026-09-25T23:07:08.772343+00:00",
-      "expires_at": "2026-09-27T23:07:08.772343+00:00",
-      "duration_hours": 48.0
-    },
-    "BNB/USDT": {
-      "symbol": "BNB/USDT",
-      "reason": "StoplossGuard: 2 stop-loss hits in last 48 hours (Whipsaw Protection)",
-      "created_at": "2026-09-26T00:34:20.564394+00:00",
-      "expires_at": "2026-09-28T00:34:20.564394+00:00",
-      "duration_hours": 48.0
-    },
-    "LINK/USDT": {
-      "symbol": "LINK/USDT",
-      "reason": "StoplossGuard: 2 stop-loss hits in last 48 hours (Whipsaw Protection)",
-      "created_at": "2026-09-26T09:17:02.236149+00:00",
-      "expires_at": "2026-09-28T09:17:02.236149+00:00",
+    "ETH/USDT": {
+      "symbol": "ETH/USDT",
+      "reason": "StoplossGuard: 9 stop-loss hits in last 48 hours (Whipsaw Protection)",
+      "created_at": "2026-09-29T03:16:35.727864+00:00",
+      "expires_at": "2026-10-01T03:16:35.727864+00:00",
       "duration_hours": 48.0
     }
   },
@@ -76,6 +62,176 @@
       "exit_price": 121.2058,
       "loss_pct": -0.13,
       "timestamp": "2026-09-26T12:22:54.190591+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-26T12:56:45.609896+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-26T12:57:16.891877+00:00"
+    },
+    {
+      "symbol": "AVAX/USDT",
+      "exit_price": 10.7638,
+      "loss_pct": -1.59,
+      "timestamp": "2026-09-26T13:11:38.941146+00:00"
+    },
+    {
+      "symbol": "SOL/USDT",
+      "exit_price": 121.5057,
+      "loss_pct": 0.2,
+      "timestamp": "2026-09-26T16:21:26.191486+00:00"
+    },
+    {
+      "symbol": "BTC/USDT",
+      "exit_price": 84136.6093,
+      "loss_pct": -0.14,
+      "timestamp": "2026-09-26T18:04:03.158622+00:00"
+    },
+    {
+      "symbol": "BTC/USDT",
+      "exit_price": 84375.0516,
+      "loss_pct": -0.14,
+      "timestamp": "2026-09-26T23:23:10.924245+00:00"
+    },
+    {
+      "symbol": "SUI/USDT",
+      "exit_price": 1.1824,
+      "loss_pct": 0.42,
+      "timestamp": "2026-09-27T02:24:35.671546+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-27T02:45:10.474357+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-27T02:45:43.900308+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-28T17:06:37.230213+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-28T17:07:01.586341+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-28T17:13:52.263699+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-28T17:17:12.440800+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-28T17:22:53.289823+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-28T17:25:17.245550+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T03:05:41.368575+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T03:09:48.558605+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T03:16:35.724266+00:00"
+    }
+  ],
+  "trade_results": [
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-28T17:22:53.308289+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-28T17:22:53.373659+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-28T17:25:17.262892+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-28T17:25:17.327619+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T03:05:41.387487+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T03:05:41.463109+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T03:09:48.572833+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T03:09:48.631933+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T03:16:35.741265+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T03:16:35.815966+00:00"
     }
   ]
 }

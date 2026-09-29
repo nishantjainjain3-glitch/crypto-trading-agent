@@ -1,12 +1,62 @@
 {
   "COOLDOWN_ACTIVE": {
+    "total_vetoed": 465,
+    "resolved_count": 445,
+    "open_count": 20,
+    "saved_losses_usd": 33.18,
+    "missed_profits_usd": 12.82,
+    "net_benefit_usd": 20.36,
+    "saved_trades_count": 331,
+    "missed_trades_count": 112
+  },
+  "INSUFFICIENT_VOLUME": {
+    "total_vetoed": 65,
+    "resolved_count": 62,
+    "open_count": 3,
+    "saved_losses_usd": 4.58,
+    "missed_profits_usd": 2.36,
+    "net_benefit_usd": 2.22,
+    "saved_trades_count": 45,
+    "missed_trades_count": 17
+  },
+  "ORDER_BOOK_GUARD": {
     "total_vetoed": 1,
-    "resolved_count": 0,
-    "open_count": 1,
-    "saved_losses_usd": 0.0,
+    "resolved_count": 1,
+    "open_count": 0,
+    "saved_losses_usd": 0.13,
     "missed_profits_usd": 0.0,
-    "net_benefit_usd": 0.0,
-    "saved_trades_count": 0,
+    "net_benefit_usd": 0.13,
+    "saved_trades_count": 1,
     "missed_trades_count": 0
+  },
+  "MARKET_LAGGARD": {
+    "total_vetoed": 1,
+    "resolved_count": 1,
+    "open_count": 0,
+    "saved_losses_usd": 0.07,
+    "missed_profits_usd": 0.0,
+    "net_benefit_usd": 0.07,
+    "saved_trades_count": 1,
+    "missed_trades_count": 0
+  },
+  "RSI_OVERBOUGHT": {
+    "total_vetoed": 1,
+    "resolved_count": 1,
+    "open_count": 0,
+    "saved_losses_usd": 0.15,
+    "missed_profits_usd": 0.0,
+    "net_benefit_usd": 0.15,
+    "saved_trades_count": 1,
+    "missed_trades_count": 0
+  },
+  "MAX_DRAWDOWN_GUARD": {
+    "total_vetoed": 333,
+    "resolved_count": 308,
+    "open_count": 25,
+    "saved_losses_usd": 61.62,
+    "missed_profits_usd": 19.78,
+    "net_benefit_usd": 41.84,
+    "saved_trades_count": 247,
+    "missed_trades_count": 55
   }
 }

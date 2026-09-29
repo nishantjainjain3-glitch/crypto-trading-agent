@@ -158,6 +158,35 @@ def get_counterfactuals():
         "recent_entries": runner.counterfactual_tracker.entries[-30:],
     }
 
+@app.get("/api/self-optimizer")
+def get_self_optimizer_status():
+    """Fetch real-time autonomous self-optimization analytics and gate efficiency."""
+    audit = runner.self_optimizer.audit_gatekeeper_efficiency()
+    latest = runner.self_optimizer.get_latest_adaptation()
+    return {
+        "active_parameters": {
+            "min_rvol": runner.gatekeeper.min_rvol,
+            "target_atr_multiplier": runner.active_params.get("target_atr_multiplier", 3.8),
+            "min_target_pct": runner.active_params.get("min_target_pct", 4.5),
+            "stop_pct": runner.active_params.get("stop_pct", 1.8),
+            "regime": runner.active_params.get("market_regime", "NORMAL_VOLATILITY"),
+        },
+        "latest_adaptation": latest,
+        "gate_efficiency_audit": audit,
+    }
+
+@app.post("/api/self-optimizer/run")
+def trigger_self_optimizer():
+    """Manually trigger a self-optimization re-calibration cycle."""
+    candidates = runner.scanner.scan_all()
+    tech_list = [c.get("technicals", {}) for c in candidates if c.get("technicals")]
+    record = runner.self_optimizer.run_optimization_cycle(
+        gatekeeper=runner.gatekeeper,
+        technicals_list=tech_list,
+    )
+    runner.active_params = record
+    return {"status": "SUCCESS", "adaptation": record}
+
 @app.get("/api/token-audit")
 def get_token_audit(contract: str, chain: str = "56"):
     """Audit token contract for honeypots, rug pulls, and hidden taxes via Binance Web3 Security."""
