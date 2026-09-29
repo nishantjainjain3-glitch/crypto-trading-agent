@@ -11,7 +11,12 @@
     "exit_reason": "TARGET_PRICE_REACHED",
     "entry_time": "2026-09-24 15:12:24 UTC",
     "exit_time": "2026-09-24 19:49:27 UTC",
-    "total_fees_usd": 0.0129
+    "total_fees_usd": 0.0129,
+    "outcome": "WIN",
+    "post_mortem": {
+      "mistake_category": "NONE",
+      "lesson": "Trade hit profit target or trailed gain cleanly (+$0.13, MFE 0.0%)."
+    }
   },
   {
     "symbol": "AVAX/USDT",
@@ -25,7 +30,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-24 20:09:38 UTC",
     "exit_time": "2026-09-24 20:20:42 UTC",
-    "total_fees_usd": 0.0127
+    "total_fees_usd": 0.0127,
+    "outcome": "LOSS",
+    "post_mortem": {
+      "mistake_category": "CONTROLLED_STOP_HIT",
+      "lesson": "Disciplined cut via stop-loss limit (-$0.14). Preserved capital against larger adverse drift."
+    }
   },
   {
     "symbol": "DOGE/USDT",
@@ -39,7 +49,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-24 20:20:48 UTC",
     "exit_time": "2026-09-24 21:41:46 UTC",
-    "total_fees_usd": 0.0125
+    "total_fees_usd": 0.0125,
+    "outcome": "WIN",
+    "post_mortem": {
+      "mistake_category": "NONE",
+      "lesson": "Trade hit profit target or trailed gain cleanly (+$0.07, MFE 0.0%)."
+    }
   },
   {
     "symbol": "LINK/USDT",
@@ -53,7 +68,12 @@
     "exit_reason": "DECAYING_ROI_TARGET_REACHED",
     "entry_time": "2026-09-24 21:43:02 UTC",
     "exit_time": "2026-09-24 22:10:41 UTC",
-    "total_fees_usd": 0.0127
+    "total_fees_usd": 0.0127,
+    "outcome": "WIN",
+    "post_mortem": {
+      "mistake_category": "NONE",
+      "lesson": "Trade hit profit target or trailed gain cleanly (+$0.18, MFE 0.0%)."
+    }
   },
   {
     "symbol": "ETH/USDT",
@@ -67,7 +87,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-25 00:55:46 UTC",
     "exit_time": "2026-09-25 08:24:52 UTC",
-    "total_fees_usd": 0.0221
+    "total_fees_usd": 0.0221,
+    "outcome": "LOSS",
+    "post_mortem": {
+      "mistake_category": "CONTROLLED_STOP_HIT",
+      "lesson": "Disciplined cut via stop-loss limit (-$0.14). Preserved capital against larger adverse drift."
+    }
   },
   {
     "symbol": "BNB/USDT",
@@ -81,7 +106,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-25 08:28:59 UTC",
     "exit_time": "2026-09-25 08:46:40 UTC",
-    "total_fees_usd": 0.022
+    "total_fees_usd": 0.022,
+    "outcome": "LOSS",
+    "post_mortem": {
+      "mistake_category": "CONTROLLED_STOP_HIT",
+      "lesson": "Disciplined cut via stop-loss limit (-$0.05). Preserved capital against larger adverse drift."
+    }
   },
   {
     "symbol": "LINK/USDT",
@@ -95,7 +125,12 @@
     "exit_reason": "DECAYING_ROI_TARGET_REACHED",
     "entry_time": "2026-09-25 08:52:05 UTC",
     "exit_time": "2026-09-25 13:47:27 UTC",
-    "total_fees_usd": 0.0225
+    "total_fees_usd": 0.0225,
+    "outcome": "WIN",
+    "post_mortem": {
+      "mistake_category": "NONE",
+      "lesson": "Trade hit profit target or trailed gain cleanly (+$0.32, MFE 0.0%)."
+    }
   },
   {
     "symbol": "DOGE/USDT",
@@ -109,7 +144,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-26 01:44:20 UTC",
     "exit_time": "2026-09-26 04:37:08 UTC",
-    "total_fees_usd": 0.0231
+    "total_fees_usd": 0.0231,
+    "outcome": "WIN",
+    "post_mortem": {
+      "mistake_category": "NONE",
+      "lesson": "Trade hit profit target or trailed gain cleanly (+$0.12, MFE 0.0%)."
+    }
   },
   {
     "symbol": "BNB/USDT",
@@ -123,7 +163,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-26 04:51:44 UTC",
     "exit_time": "2026-09-26 06:04:20 UTC",
-    "total_fees_usd": 0.0221
+    "total_fees_usd": 0.0221,
+    "outcome": "LOSS",
+    "post_mortem": {
+      "mistake_category": "CONTROLLED_STOP_HIT",
+      "lesson": "Disciplined cut via stop-loss limit (-$0.06). Preserved capital against larger adverse drift."
+    }
   },
   {
     "symbol": "LINK/USDT",
@@ -137,7 +182,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-26 06:25:17 UTC",
     "exit_time": "2026-09-26 06:59:55 UTC",
-    "total_fees_usd": 0.0231
+    "total_fees_usd": 0.0231,
+    "outcome": "LOSS",
+    "post_mortem": {
+      "mistake_category": "CONTROLLED_STOP_HIT",
+      "lesson": "Disciplined cut via stop-loss limit (-$0.16). Preserved capital against larger adverse drift."
+    }
   },
   {
     "symbol": "AVAX/USDT",
@@ -151,7 +201,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-26 07:41:50 UTC",
     "exit_time": "2026-09-26 08:33:00 UTC",
-    "total_fees_usd": 0.0229
+    "total_fees_usd": 0.0229,
+    "outcome": "LOSS",
+    "post_mortem": {
+      "mistake_category": "CONTROLLED_STOP_HIT",
+      "lesson": "Disciplined cut via stop-loss limit (-$0.25). Preserved capital against larger adverse drift."
+    }
   },
   {
     "symbol": "LINK/USDT",
@@ -165,7 +220,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-26 09:55:37 UTC",
     "exit_time": "2026-09-26 14:47:02 UTC",
-    "total_fees_usd": 0.0225
+    "total_fees_usd": 0.0225,
+    "outcome": "LOSS",
+    "post_mortem": {
+      "mistake_category": "CONTROLLED_STOP_HIT",
+      "lesson": "Disciplined cut via stop-loss limit (-$0.19). Preserved capital against larger adverse drift."
+    }
   },
   {
     "symbol": "SOL/USDT",
@@ -179,7 +239,12 @@
     "exit_reason": "TARGET_PRICE_REACHED",
     "entry_time": "2026-09-26 15:08:22 UTC",
     "exit_time": "2026-09-26 17:05:27 UTC",
-    "total_fees_usd": 0.0226
+    "total_fees_usd": 0.0226,
+    "outcome": "WIN",
+    "post_mortem": {
+      "mistake_category": "NONE",
+      "lesson": "Trade hit profit target or trailed gain cleanly (+$0.09, MFE 0.0%)."
+    }
   },
   {
     "symbol": "SOL/USDT",
@@ -193,7 +258,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-26 17:05:47 UTC",
     "exit_time": "2026-09-26 17:52:54 UTC",
-    "total_fees_usd": 0.0228
+    "total_fees_usd": 0.0228,
+    "outcome": "LOSS",
+    "post_mortem": {
+      "mistake_category": "CONTROLLED_STOP_HIT",
+      "lesson": "Disciplined cut via stop-loss limit (-$0.02). Preserved capital against larger adverse drift."
+    }
   },
   {
     "symbol": "AVAX/USDT",
@@ -210,7 +280,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-26 17:56:10 UTC",
     "exit_time": "2026-09-26 18:41:38 UTC",
-    "total_fees_usd": 0.0224
+    "total_fees_usd": 0.0224,
+    "outcome": "LOSS",
+    "post_mortem": {
+      "mistake_category": "CONTROLLED_STOP_HIT",
+      "lesson": "Disciplined cut via stop-loss limit (-$0.24). Preserved capital against larger adverse drift."
+    }
   },
   {
     "symbol": "SOL/USDT",
@@ -227,7 +302,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-26 19:44:52 UTC",
     "exit_time": "2026-09-26 21:51:26 UTC",
-    "total_fees_usd": 0.0224
+    "total_fees_usd": 0.0224,
+    "outcome": "WIN",
+    "post_mortem": {
+      "mistake_category": "NONE",
+      "lesson": "Trade hit profit target or trailed gain cleanly (+$0.03, MFE 0.78%)."
+    }
   },
   {
     "symbol": "BTC/USDT",
@@ -244,7 +324,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-26 23:15:08 UTC",
     "exit_time": "2026-09-26 23:34:03 UTC",
-    "total_fees_usd": 0.0214
+    "total_fees_usd": 0.0214,
+    "outcome": "LOSS",
+    "post_mortem": {
+      "mistake_category": "CONTROLLED_STOP_HIT",
+      "lesson": "Disciplined cut via stop-loss limit (-$0.02). Preserved capital against larger adverse drift."
+    }
   },
   {
     "symbol": "BTC/USDT",
@@ -261,7 +346,12 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-27 03:38:55 UTC",
     "exit_time": "2026-09-27 04:53:10 UTC",
-    "total_fees_usd": 0.0216
+    "total_fees_usd": 0.0216,
+    "outcome": "LOSS",
+    "post_mortem": {
+      "mistake_category": "CONTROLLED_STOP_HIT",
+      "lesson": "Disciplined cut via stop-loss limit (-$0.02). Preserved capital against larger adverse drift."
+    }
   },
   {
     "symbol": "SUI/USDT",
@@ -278,6 +368,33 @@
     "exit_reason": "STOP_LOSS_HIT",
     "entry_time": "2026-09-27 07:11:21 UTC",
     "exit_time": "2026-09-27 07:54:35 UTC",
-    "total_fees_usd": 0.0214
+    "total_fees_usd": 0.0214,
+    "outcome": "WIN",
+    "post_mortem": {
+      "mistake_category": "NONE",
+      "lesson": "Trade hit profit target or trailed gain cleanly (+$0.06, MFE 1.16%)."
+    }
+  },
+  {
+    "symbol": "LINK/USDT",
+    "direction": "BUY",
+    "entry_price": 14.9,
+    "exit_price": 14.872,
+    "quantity": 1.03,
+    "allocated_usd": 15.35,
+    "net_pnl_usd": -0.05,
+    "pnl_pct": -0.33,
+    "mfe_pct": 4.58,
+    "mae_pct": -1.66,
+    "holding_seconds": 21763,
+    "exit_reason": "STOP_LOSS_HIT",
+    "entry_time": "2026-09-29 09:18:40 UTC",
+    "exit_time": "2026-09-29 20:51:23 UTC",
+    "total_fees_usd": 0.023,
+    "outcome": "LOSS",
+    "post_mortem": {
+      "mistake_category": "TRAILING_STOP_LAG",
+      "lesson": "MFE reached +4.58% but trailing stop failed to protect gains before stop-loss hit. Action: Tighten breakeven ratchet threshold."
+    }
   }
 ]

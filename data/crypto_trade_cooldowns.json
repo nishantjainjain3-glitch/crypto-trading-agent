@@ -2,9 +2,9 @@
   "cooldowns": {
     "ETH/USDT": {
       "symbol": "ETH/USDT",
-      "reason": "StoplossGuard: 9 stop-loss hits in last 48 hours (Whipsaw Protection)",
-      "created_at": "2026-09-29T03:16:35.727864+00:00",
-      "expires_at": "2026-10-01T03:16:35.727864+00:00",
+      "reason": "StoplossGuard: 20 stop-loss hits in last 48 hours (Whipsaw Protection)",
+      "created_at": "2026-09-29T17:36:53.841862+00:00",
+      "expires_at": "2026-10-01T17:36:53.841862+00:00",
       "duration_hours": 48.0
     }
   },
@@ -170,6 +170,78 @@
       "exit_price": 1980.0,
       "loss_pct": -1.0,
       "timestamp": "2026-09-29T03:16:35.724266+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T06:25:38.428278+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T06:26:31.750511+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T09:47:09.194162+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T09:53:27.402072+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T09:53:59.676269+00:00"
+    },
+    {
+      "symbol": "LINK/USDT",
+      "exit_price": 14.872,
+      "loss_pct": -0.33,
+      "timestamp": "2026-09-29T15:21:23.571596+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T16:57:02.875580+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T17:07:01.653071+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T17:22:19.799140+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T17:24:21.113665+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T17:32:28.220932+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "exit_price": 1980.0,
+      "loss_pct": -1.0,
+      "timestamp": "2026-09-29T17:36:53.837075+00:00"
     }
   ],
   "trade_results": [
@@ -232,6 +304,144 @@
       "net_pnl_usd": 294.02,
       "pnl_pct": 9.8,
       "timestamp": "2026-09-29T03:16:35.815966+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T06:25:38.443843+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T06:25:38.536495+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T06:26:31.765800+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T06:26:31.861686+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T09:47:09.223082+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T09:47:09.342954+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T09:53:27.422675+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T09:53:27.517829+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T09:53:59.690665+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T09:53:59.792071+00:00"
+    },
+    {
+      "symbol": "LINK/USDT",
+      "net_pnl_usd": -0.05,
+      "pnl_pct": -0.33,
+      "timestamp": "2026-09-29T15:21:23.577280+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T16:57:02.928191+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T16:57:03.139017+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T17:07:01.674733+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T17:07:01.796505+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T17:22:19.821846+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T17:22:19.949096+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T17:24:21.134627+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T17:24:21.239752+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T17:32:28.238748+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T17:32:28.340326+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": -0.2,
+      "pnl_pct": -1.0,
+      "timestamp": "2026-09-29T17:36:53.858823+00:00"
+    },
+    {
+      "symbol": "ETH/USDT",
+      "net_pnl_usd": 294.02,
+      "pnl_pct": 9.8,
+      "timestamp": "2026-09-29T17:36:54.092871+00:00"
     }
   ]
 }

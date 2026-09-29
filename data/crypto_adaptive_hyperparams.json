@@ -1,0 +1,14 @@
+{
+  "min_rvol_ratio": 1.2,
+  "breakeven_atr_mult": 1.0,
+  "trailing_stop_atr_mult": 1.5,
+  "cooldown_minutes_after_loss": 45.0,
+  "max_concurrent_positions": 2,
+  "max_risk_per_trade_pct": 5.0,
+  "min_reward_to_risk": 1.5,
+  "min_quote_volume_24h_usd": 5000000.0,
+  "applied_mutations": [
+    "Extended post-loss cooldown to 45 minutes to curb revenge trading."
+  ],
+  "last_tuned": "2026-09-29T17:36:54.119799+00:00"
+}

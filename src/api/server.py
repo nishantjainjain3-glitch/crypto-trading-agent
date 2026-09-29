@@ -18,8 +18,11 @@ from src.analysis.multi_horizon_consensus import MultiHorizonConsensusEngine
 from src.engine.dynamic_risk_allocator import DynamicRiskAllocator
 from src.engine.alpha_researcher import QuantitativeAlphaResearcher
 from src.analysis.platt_calibrator import PlattCalibrator
+from src.analysis.yang_zhang_volatility import compute_yang_zhang_volatility
+from src.engine.tca_analyzer import TransactionCostAnalyzer
+from src.engine.cppi_risk_cushion import CPPIRiskCushion
 
-app = FastAPI(title="Crypto Trade Agent API", version="1.2.0")
+app = FastAPI(title="Crypto Trade Agent API", version="1.3.0")
 
 # Global instances
 exchange_client = CryptoExchangeClient()
@@ -32,6 +35,8 @@ consensus_engine = MultiHorizonConsensusEngine()
 risk_allocator = DynamicRiskAllocator()
 alpha_researcher = QuantitativeAlphaResearcher()
 platt_calibrator = PlattCalibrator()
+tca_analyzer = TransactionCostAnalyzer()
+cppi_engine = CPPIRiskCushion()
 
 static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "static")
 if os.path.exists(static_dir):
@@ -299,6 +304,35 @@ def fit_calibration():
     """Fit Platt scaling parameters from all closed trades in history."""
     history = paper_trader._load_history()
     return platt_calibrator.fit_from_trade_history(history)
+
+@app.get("/api/volatility-profile")
+def get_volatility_profile(symbol: str = "BTC/USDT", timeframe: str = "1h"):
+    """Compute Yang-Zhang, Garman-Klass, Parkinson, and Close-to-Close volatility profile."""
+    df = exchange_client.fetch_ohlcv(symbol, timeframe=timeframe, limit=100)
+    if df.empty:
+        raise HTTPException(status_code=404, detail=f"No OHLCV candles found for {symbol}")
+    profile = compute_yang_zhang_volatility(df)
+    profile["symbol"] = symbol
+    profile["timeframe"] = timeframe
+    return profile
+
+@app.get("/api/tca")
+def get_transaction_cost_analysis():
+    """Fetch post-trade transaction cost analysis (TCA) and execution shortfall metrics."""
+    summary = tca_analyzer.get_tca_summary()
+    records = tca_analyzer.load_records()
+    summary["recent_executions"] = records[-20:]
+    return summary
+
+@app.get("/api/cppi-cushion")
+def get_cppi_cushion():
+    """Fetch live Constant Proportion Portfolio Insurance (CPPI) cushion and equity floor."""
+    summary = paper_trader.get_portfolio_summary()
+    current_equity = summary.get("total_equity_usdt", 9.27)
+    # Peak equity can be read from ledger or peak seen
+    history = paper_trader._load_history()
+    peak_equity = max([current_equity] + [t.get("equity_after", 0.0) for t in history]) if history else current_equity
+    return cppi_engine.evaluate_cushion(current_equity=current_equity, peak_equity=peak_equity)
 
 @app.get("/api/logs")
 def get_logs(limit: int = 100):

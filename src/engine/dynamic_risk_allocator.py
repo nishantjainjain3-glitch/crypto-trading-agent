@@ -6,20 +6,26 @@ current portfolio drawdown dampening, and exchange tier-specific constraints.
 
 from typing import Dict, Any, List, Optional
 import math
+from src.engine.cppi_risk_cushion import CPPIRiskCushion
 
 
 class DynamicRiskAllocator:
-    """Computes capital allocation per trade based on performance and drawdown."""
+    """Computes capital allocation per trade based on performance, CPPI floor, and drawdown."""
 
     def __init__(
         self,
         min_notional_usd: float = 5.0,
         max_portfolio_risk_pct: float = 2.5,
         default_risk_fraction: float = 0.20,
+        max_drawdown_limit_pct: float = 5.0,
     ):
         self.min_notional_usd = min_notional_usd
         self.max_portfolio_risk_pct = max_portfolio_risk_pct
         self.default_risk_fraction = default_risk_fraction
+        self.cppi_cushion = CPPIRiskCushion(
+            max_drawdown_pct=max_drawdown_limit_pct,
+            min_notional_usd=min_notional_usd,
+        )
 
     def calculate_kelly_fraction(
         self,
@@ -132,6 +138,22 @@ class DynamicRiskAllocator:
                     "is_approved": False,
                     "reason": f"Calculated size ${target_usd:.2f} is below minNotional ${self.min_notional_usd:.2f}",
                 }
+
+        # Apply CPPI drawdown floor constraint
+        if peak_equity_usdt > 0 and total_equity_usdt > 0:
+            cppi_res = self.cppi_cushion.constrain_allocation(
+                proposed_usd=target_usd,
+                current_equity=total_equity_usdt,
+                peak_equity=peak_equity_usdt,
+            )
+            if not cppi_res.get("allowed", True):
+                return {
+                    "allocated_usd": 0.0,
+                    "quantity": 0.0,
+                    "is_approved": False,
+                    "reason": cppi_res.get("reason", "Vetoed by CPPI drawdown floor"),
+                }
+            target_usd = cppi_res.get("allocated_usd", target_usd)
 
         quantity = target_usd / entry_price if entry_price > 0 else 0.0
 

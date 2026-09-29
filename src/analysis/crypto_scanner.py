@@ -13,6 +13,8 @@ from src.analysis.smart_money_signals import analyze_smart_money_backing
 from src.analysis.dip_analyser import analyze_dip_setup
 from src.analysis.momentum_impulse import detect_momentum_impulse
 from src.analysis.multi_horizon_consensus import MultiHorizonConsensusEngine
+from src.analysis.yang_zhang_volatility import compute_yang_zhang_volatility
+from src.engine.tca_analyzer import TransactionCostAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -193,6 +195,21 @@ class CryptoScanner:
         except Exception as e:
             logger.debug(f"Multi-horizon consensus error for {symbol}: {e}")
 
+        # Yang-Zhang Multi-Component Volatility Profile
+        yz_vol = compute_yang_zhang_volatility(df) if not df.empty else {}
+        if yz_vol.get("volatility_regime") == "EXTREME_VOLATILITY":
+            score -= 10
+            bearish_factors.append(f"Extreme Intraday Volatility: Yang-Zhang {yz_vol.get('annualized_yz', 0)*100:.1f}%")
+        elif yz_vol.get("volatility_regime") == "LOW_VOLATILITY":
+            bullish_factors.append(f"Calm Volatility Compression: Yang-Zhang {yz_vol.get('annualized_yz', 0)*100:.1f}%")
+
+        # TCA Historical Slippage Penalty
+        tca = TransactionCostAnalyzer()
+        slip_pen = tca.get_symbol_slippage_penalty(symbol)
+        if slip_pen > 0:
+            score -= int(slip_pen)
+            bearish_factors.append(f"TCA Historical Slippage Penalty: -{slip_pen:.1f} pts")
+
         score = max(5, min(95, score))
         verdict = (
             "STRONG_BUY"
@@ -213,6 +230,8 @@ class CryptoScanner:
             "dip_signal": dip_signal,
             "momentum_impulse": impulse_signal,
             "consensus": consensus_info,
+            "yang_zhang_volatility": yz_vol,
+            "tca_slippage_penalty": slip_pen,
             "order_flow": order_flow,
             "order_book": order_book,
             "smart_money": smart_money,

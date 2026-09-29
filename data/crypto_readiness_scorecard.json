@@ -1,0 +1,57 @@
+{
+  "score": 70,
+  "max_score": 100,
+  "verdict": "PROGRESSING",
+  "total_trades": 19,
+  "wins": 8,
+  "losses": 11,
+  "win_rate_pct": 42.11,
+  "net_pnl_usdt": 0.06,
+  "profit_factor": 0.78,
+  "max_drawdown_pct": 3.69,
+  "hurdles": [
+    {
+      "criterion": "Net Capital Growth",
+      "status": "PASSED",
+      "weight": 25,
+      "awarded": 25,
+      "detail": "Net realized PnL is +$0.06 USDT."
+    },
+    {
+      "criterion": "Win Rate Discipline",
+      "status": "PROGRESSING",
+      "weight": 20,
+      "awarded": 10,
+      "detail": "Win rate is 42.1% (acceptable range 40-50%)."
+    },
+    {
+      "criterion": "Profit Factor",
+      "status": "FAILING",
+      "weight": 15,
+      "awarded": 0,
+      "detail": "Profit factor is 0.78 (gross losses exceed gross gains)."
+    },
+    {
+      "criterion": "Capital Preservation",
+      "status": "PASSED",
+      "weight": 20,
+      "awarded": 20,
+      "detail": "Max historical drawdown is 3.69% (limit <= 4.0%)."
+    },
+    {
+      "criterion": "Sample Significance",
+      "status": "PROGRESSING",
+      "weight": 10,
+      "awarded": 5,
+      "detail": "Sample of 19 closed trades (target >= 30)."
+    },
+    {
+      "criterion": "Self-Correction Track Record",
+      "status": "PASSED",
+      "weight": 10,
+      "awarded": 10,
+      "detail": "5 retrospectives and 1 adaptive mutations applied."
+    }
+  ],
+  "last_audited": "2026-09-29T09:49:16.461059+00:00"
+}

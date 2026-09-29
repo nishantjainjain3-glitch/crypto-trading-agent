@@ -2,15 +2,15 @@
   "initial_capital_usdt": 16.74,
   "current_investment_baseline_usdt": 16.84,
   "session_start_date": "2026-09-29",
-  "virtual_cash_usdt": 16.83907303,
-  "realized_pnl_usdt": 0.06,
-  "total_fees_usdt": 0.34,
-  "total_trades": 19,
+  "virtual_cash_usdt": 1.645591030000002,
+  "realized_pnl_usdt": 0.01,
+  "total_fees_usdt": 0.37129999999999996,
+  "total_trades": 20,
   "winning_trades": 8,
-  "losing_trades": 11,
-  "win_rate_pct": 42.11,
-  "profit_factor": 0.78,
+  "losing_trades": 12,
+  "win_rate_pct": 40.0,
+  "profit_factor": 0.75,
   "peak_equity_usdt": 16.86,
   "max_drawdown_pct": 3.69,
-  "last_updated": "2026-09-27T07:54:35.679524"
+  "last_updated": "2026-09-29T20:51:23.603440"
 }
