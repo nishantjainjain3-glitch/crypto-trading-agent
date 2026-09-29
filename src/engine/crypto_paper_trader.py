@@ -168,14 +168,21 @@ class CryptoPaperTrader:
                 pos["lowest_price"] = min(pos.get("lowest_price", entry_p), current_price)
                 unrealized_pnl = (current_price - entry_p) * qty
 
-                # Dynamic Breakeven Rule: at +0.5x ATR move stop to breakeven + buffer
-                if not pos["breakeven_triggered"] and (current_price - entry_p) >= (0.5 * atr):
-                    pos["stop_loss"] = round(entry_p * 1.0008, 4)
+                # Dynamic Breakeven Rule: at +0.50x ATR move stop to breakeven + buffer
+                if not pos["breakeven_triggered"] and (pos["highest_price"] - entry_p) >= (0.50 * atr):
+                    pos["stop_loss"] = round(entry_p * 1.0015, 4)
                     pos["breakeven_triggered"] = True
                     logger.info(f"{symbol}: Dynamic breakeven activated at ${pos['stop_loss']}")
 
-                # Trailing Stop Rule: at +1.75x ATR trail at 1.0x ATR behind peak
-                if (current_price - entry_p) >= (1.75 * atr):
+                # Profit Lock Tier: at +1.0x ATR or +2.5% MFE, lock in +1.0% guaranteed net gain
+                if (pos["highest_price"] - entry_p) >= max(1.0 * atr, entry_p * 0.025):
+                    lock_level = round(entry_p * 1.010, 4)
+                    if lock_level > pos["stop_loss"]:
+                        pos["stop_loss"] = lock_level
+                        logger.info(f"{symbol}: Profit lock triggered at ${lock_level} (+1.0% locked)")
+
+                # Trailing Stop Rule: at +1.50x ATR peak trail at 1.0x ATR behind peak
+                if (pos["highest_price"] - entry_p) >= (1.50 * atr):
                     trail_level = round(pos["highest_price"] - (1.0 * atr), 4)
                     if trail_level > pos["stop_loss"]:
                         pos["stop_loss"] = trail_level

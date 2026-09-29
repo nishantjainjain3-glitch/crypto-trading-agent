@@ -79,22 +79,27 @@ def compute_crypto_trailing_stop(
         pass
 
     if be_mult is None:
-        be_mult = 1.0
+        be_mult = 0.5
     if dist_mult is None:
-        dist_mult = 1.2
+        dist_mult = 1.0
     if act_mult is None:
-        act_mult = 2.0
+        act_mult = 1.5
 
     peak = max(highest_price, current_price, entry_price)
     profit = peak - entry_price
 
     breakeven_active = profit >= (be_mult * atr)
+    profit_lock_active = profit >= max(1.0 * atr, entry_price * 0.025)
     trailing_active = profit >= (act_mult * atr)
 
     effective_stop = initial_stop_loss
     if trailing_active:
-        trail_level = round(peak - (trailing_distance_atr * atr), 6)
+        trail_level = round(peak - (dist_mult * atr), 6)
         effective_stop = max(effective_stop, trail_level)
+    elif profit_lock_active:
+        # Lock in +1.0% profit once peak reaches +2.5% MFE or +1.0x ATR
+        lock_level = round(entry_price * 1.010, 6)
+        effective_stop = max(effective_stop, lock_level)
     elif breakeven_active:
         # Breakeven stop set to +0.35% above entry to guarantee net profit after exchange fees
         be_level = round(entry_price * 1.0035, 6)
