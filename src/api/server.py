@@ -14,8 +14,11 @@ from src.analysis.regime_service import get_current_regime
 from src.engine.crypto_paper_trader import CryptoPaperTrader
 from src.engine.continuous_runner import ContinuousCryptoRunner
 from src.engine.ip_monitor import IPMonitor, load_whitelisted_ips, save_whitelisted_ips
+from src.analysis.multi_horizon_consensus import MultiHorizonConsensusEngine
+from src.engine.dynamic_risk_allocator import DynamicRiskAllocator
+from src.engine.alpha_researcher import QuantitativeAlphaResearcher
 
-app = FastAPI(title="Crypto Trade Agent API", version="1.0.0")
+app = FastAPI(title="Crypto Trade Agent API", version="1.1.0")
 
 # Global instances
 exchange_client = CryptoExchangeClient()
@@ -24,6 +27,9 @@ runner = ContinuousCryptoRunner()
 paper_trader = runner.paper_trader
 backtester = CryptoBacktester()
 ip_monitor = IPMonitor()
+consensus_engine = MultiHorizonConsensusEngine()
+risk_allocator = DynamicRiskAllocator()
+alpha_researcher = QuantitativeAlphaResearcher()
 
 static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "static")
 if os.path.exists(static_dir):
@@ -208,6 +214,67 @@ def run_backtest(req: BacktestRequest):
             raise HTTPException(status_code=400, detail="Could not download data for symbol")
         metrics = backtester.backtest_ema_crossover(df, req.fast_period, req.slow_period)
         return metrics
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/consensus")
+def get_symbol_consensus(symbol: str = Query("LINK/USDT")):
+    """Fetch multi-horizon consensus (15m, 1h, 4h) for a given symbol."""
+    try:
+        df_15m = exchange_client.fetch_ohlcv(symbol, timeframe="15m", limit=60)
+        df_1h = exchange_client.fetch_ohlcv(symbol, timeframe="1h", limit=60)
+        df_4h = exchange_client.fetch_ohlcv(symbol, timeframe="4h", limit=60)
+        return consensus_engine.compute_consensus(df_15m, df_1h, df_4h)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/allocator/sizing")
+def get_sizing_preview(symbol: str = "LINK/USDT", entry_price: float = 15.0, stop_loss: float = 14.7):
+    """Preview fractional Kelly and drawdown-dampened position size."""
+    try:
+        prices = {symbol: entry_price}
+        summary = paper_trader.get_portfolio_summary(prices)
+        live_cash = summary.get("cash_usdt", 1.48)
+        if runner.is_live:
+            try:
+                bal = exchange_client.fetch_balance()
+                live_cash = bal.get("free", {}).get("USDT", live_cash)
+            except Exception:
+                pass
+        return risk_allocator.allocate_position(
+            symbol=symbol,
+            entry_price=entry_price,
+            stop_loss=stop_loss,
+            free_cash_usdt=live_cash,
+            total_equity_usdt=summary.get("total_equity_usdt", 17.3),
+            peak_equity_usdt=paper_trader.ledger.get("peak_equity_usdt", 17.3),
+            trade_history=paper_trader.history,
+            open_positions_count=len(paper_trader.positions),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/alpha/strategies")
+def list_alpha_strategies():
+    """List available quantitative strategies in the research sandbox."""
+    return {
+        "strategies": list(alpha_researcher.registered_strategies.keys()),
+        "description": "Academic quantitative models for breakout, mean-reversion, and momentum",
+    }
+
+class AlphaBacktestRequest(BaseModel):
+    strategy_name: str = "MOMENTUM_IMPULSE"
+    symbol: str = "BTC-USD"
+    period: str = "1y"
+
+@app.post("/api/alpha/backtest")
+def run_alpha_backtest(req: AlphaBacktestRequest):
+    """Backtest a quantitative academic alpha strategy against historical OHLCV data."""
+    try:
+        df = backtester.fetch_historical_data(req.symbol, period=req.period)
+        if df.empty:
+            raise HTTPException(status_code=400, detail="Could not download historical data")
+        return alpha_researcher.evaluate_strategy_on_ohlcv(req.strategy_name, df)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

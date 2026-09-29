@@ -166,6 +166,14 @@ class CryptoTradeGatekeeper:
                 f"EXTREME_GREED_EXHAUSTION: Crypto Fear & Greed Index is {fng_score}/100. High smart money distribution risk."
             )
 
+        # Gate 13: Multi-Horizon Consensus Conflict Guard
+        consensus_score = technicals.get("consensus_score")
+        if consensus_score is not None and direction.upper() == "BUY" and not is_liquidity_sweep:
+            if consensus_score < 0.20:
+                veto_reasons.append(
+                    f"CONSENSUS_CONFLICT: Multi-horizon consensus score {consensus_score:.2f} < 0.20. Conflicting micro/intermediate/macro signals."
+                )
+
         passed = len(veto_reasons) == 0
         verdict = "APPROVED" if passed else "VETOED"
         return passed, verdict, veto_reasons

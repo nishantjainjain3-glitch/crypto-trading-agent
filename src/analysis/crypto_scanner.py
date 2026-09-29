@@ -12,6 +12,7 @@ from src.analysis.order_book_depth import analyze_order_book_depth
 from src.analysis.smart_money_signals import analyze_smart_money_backing
 from src.analysis.dip_analyser import analyze_dip_setup
 from src.analysis.momentum_impulse import detect_momentum_impulse
+from src.analysis.multi_horizon_consensus import MultiHorizonConsensusEngine
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class CryptoScanner:
     ):
         self.client = exchange_client or CryptoExchangeClient()
         self.watchlist = watchlist or DEFAULT_WATCHLIST
+        self.consensus_engine = MultiHorizonConsensusEngine()
 
     def refresh_volume_watchlist(self, top_n: int = 20) -> List[str]:
         """Freqtrade-style VolumePairList: refreshes watchlist with top liquid volume pairs."""
@@ -172,6 +174,25 @@ class CryptoScanner:
             score += impulse_signal.get("score_boost", 25)
             bullish_factors.append(impulse_signal["rationale"])
 
+        # Multi-Horizon Trend Consensus (15m, 1h, 4h)
+        consensus_info = {}
+        try:
+            df_15m = self.client.fetch_ohlcv(symbol, timeframe="15m", limit=60) if not df.empty else None
+            df_4h = self.client.fetch_ohlcv(symbol, timeframe="4h", limit=60) if not df.empty else None
+            consensus_info = self.consensus_engine.compute_consensus(df_15m, df, df_4h)
+            technicals["consensus_score"] = consensus_info.get("consensus_score", 0.0)
+            technicals["consensus_verdict"] = consensus_info.get("verdict", "NEUTRAL")
+
+            c_score = consensus_info.get("consensus_score", 0.0)
+            if c_score >= 0.40:
+                score += 10
+                bullish_factors.append(f"Multi-Horizon Alignment: {consensus_info.get('verdict')} (Score: {c_score})")
+            elif c_score <= -0.40:
+                score -= 10
+                bearish_factors.append(f"Multi-Horizon Headwind: {consensus_info.get('verdict')} (Score: {c_score})")
+        except Exception as e:
+            logger.debug(f"Multi-horizon consensus error for {symbol}: {e}")
+
         score = max(5, min(95, score))
         verdict = (
             "STRONG_BUY"
@@ -191,6 +212,7 @@ class CryptoScanner:
             "liquidity_sweep": sweep_signal,
             "dip_signal": dip_signal,
             "momentum_impulse": impulse_signal,
+            "consensus": consensus_info,
             "order_flow": order_flow,
             "order_book": order_book,
             "smart_money": smart_money,

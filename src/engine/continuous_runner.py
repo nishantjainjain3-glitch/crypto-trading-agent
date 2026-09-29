@@ -13,6 +13,7 @@ from src.engine.crypto_paper_trader import CryptoPaperTrader
 from src.engine.counterfactual_tracker import CounterfactualTracker
 from src.analysis.sentiment_service import get_crypto_fear_and_greed, get_binance_funding_rate
 from src.engine.self_optimizer import SelfOptimizationEngine
+from src.engine.dynamic_risk_allocator import DynamicRiskAllocator
 from src.notifications.telegram import TelegramNotifier
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ class ContinuousCryptoRunner:
             attribution_path=os.path.join(data_dir, "gatekeeper_attribution.json"),
         )
         self.position_sizer = PositionSizer()
+        self.risk_allocator = DynamicRiskAllocator()
         self.self_optimizer = SelfOptimizationEngine(data_dir=data_dir)
         self.active_params = self.self_optimizer.run_optimization_cycle(gatekeeper=self.gatekeeper)
         self.last_self_optimization_time = time.time()
@@ -253,27 +255,35 @@ class ContinuousCryptoRunner:
                 )
                 continue
 
-            # Compute position size
-            size_info = self.position_sizer.calculate_size(
-                symbol=symbol,
-                entry_price=entry_price,
-                stop_loss=stop_loss,
-                atr=atr,
-                current_equity=current_equity,
-            )
-
+            # Compute position size via DynamicRiskAllocator (Fractional Kelly + Drawdown Dampening)
+            live_cash = 0.0
             if self.is_live:
                 try:
                     bal = self.client.fetch_balance()
                     live_cash = bal.get("free", {}).get("USDT", 0.0)
-                    if live_cash < 5.0:
-                        logger.warning(f"Live cash ${live_cash:.2f} is below $5.00 minNotional. Skipping live buy.")
-                        continue
-                    # For small accounts, allocate 92% of available cash to leave buffer for fees and slippage
-                    alloc = min(live_cash * 0.92, size_info.get("allocated_capital_usd", live_cash * 0.92))
-                    if alloc < 5.05:
-                        alloc = 5.05
-                    raw_qty = alloc / entry_price
+                except Exception:
+                    live_cash = ledger_summary.get("cash_usdt", current_equity)
+            else:
+                live_cash = ledger_summary.get("cash_usdt", current_equity)
+
+            alloc_info = self.risk_allocator.allocate_position(
+                symbol=symbol,
+                entry_price=entry_price,
+                stop_loss=stop_loss,
+                free_cash_usdt=live_cash,
+                total_equity_usdt=current_equity,
+                peak_equity_usdt=peak_equity,
+                trade_history=self.paper_trader.history,
+                open_positions_count=len(self.paper_trader.positions),
+            )
+
+            if not alloc_info.get("is_approved", False):
+                logger.warning(f"Risk allocator declined {symbol}: {alloc_info.get('reason')}")
+                continue
+
+            if self.is_live:
+                try:
+                    raw_qty = alloc_info["quantity"]
                     formatted_qty = self.client.exchange.amount_to_precision(symbol, raw_qty)
                     qty = float(formatted_qty)
                     if (qty * entry_price) < 5.0:
@@ -281,9 +291,9 @@ class ContinuousCryptoRunner:
                         continue
                 except Exception as e:
                     logger.error(f"Error sizing live order: {e}")
-                    qty = size_info["quantity"]
+                    qty = alloc_info["quantity"]
             else:
-                qty = size_info["quantity"]
+                qty = alloc_info["quantity"]
 
             try:
                 # Live order execution on Binance
