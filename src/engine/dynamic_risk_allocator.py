@@ -21,8 +21,12 @@ class DynamicRiskAllocator:
         self.max_portfolio_risk_pct = max_portfolio_risk_pct
         self.default_risk_fraction = default_risk_fraction
 
-    def calculate_kelly_fraction(self, trade_history: List[Dict[str, Any]]) -> float:
-        """Calculate quarter-Kelly optimal fraction from closed trade history."""
+    def calculate_kelly_fraction(
+        self,
+        trade_history: List[Dict[str, Any]],
+        calibrated_win_prob: Optional[float] = None,
+    ) -> float:
+        """Calculate quarter-Kelly optimal fraction using historical or Platt-calibrated win probability."""
         if not trade_history or len(trade_history) < 5:
             return self.default_risk_fraction
 
@@ -32,7 +36,7 @@ class DynamicRiskAllocator:
         if not wins or not losses:
             return self.default_risk_fraction
 
-        win_rate = len(wins) / len(trade_history)
+        win_rate = calibrated_win_prob if calibrated_win_prob is not None else (len(wins) / len(trade_history))
         avg_win = sum(wins) / len(wins)
         avg_loss = sum(losses) / len(losses)
 
@@ -77,6 +81,7 @@ class DynamicRiskAllocator:
         open_positions_count: int = 0,
         max_open_positions: int = 2,
         stop_loss: Optional[float] = None,
+        calibrated_win_prob: Optional[float] = None,
     ) -> Dict[str, Any]:
         """Compute position size in USDT and base units with exchange filter validation."""
         sl = stop_loss if stop_loss is not None else (stop_loss_price if stop_loss_price is not None else entry_price * 0.98)
@@ -97,7 +102,7 @@ class DynamicRiskAllocator:
                 "reason": f"Maximum open positions ({max_open_positions}) reached",
             }
 
-        kelly_frac = self.calculate_kelly_fraction(trade_history or [])
+        kelly_frac = self.calculate_kelly_fraction(trade_history or [], calibrated_win_prob=calibrated_win_prob)
         dampener = self.compute_drawdown_dampener(total_equity_usdt, peak_equity_usdt)
 
         # Tier-based sizing:

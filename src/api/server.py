@@ -17,8 +17,9 @@ from src.engine.ip_monitor import IPMonitor, load_whitelisted_ips, save_whitelis
 from src.analysis.multi_horizon_consensus import MultiHorizonConsensusEngine
 from src.engine.dynamic_risk_allocator import DynamicRiskAllocator
 from src.engine.alpha_researcher import QuantitativeAlphaResearcher
+from src.analysis.platt_calibrator import PlattCalibrator
 
-app = FastAPI(title="Crypto Trade Agent API", version="1.1.0")
+app = FastAPI(title="Crypto Trade Agent API", version="1.2.0")
 
 # Global instances
 exchange_client = CryptoExchangeClient()
@@ -30,6 +31,7 @@ ip_monitor = IPMonitor()
 consensus_engine = MultiHorizonConsensusEngine()
 risk_allocator = DynamicRiskAllocator()
 alpha_researcher = QuantitativeAlphaResearcher()
+platt_calibrator = PlattCalibrator()
 
 static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "static")
 if os.path.exists(static_dir):
@@ -277,6 +279,26 @@ def run_alpha_backtest(req: AlphaBacktestRequest):
         return alpha_researcher.evaluate_strategy_on_ohlcv(req.strategy_name, df)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/calibration")
+def get_calibration_status():
+    """Fetch Platt calibration parameters, Brier score, and Brier skill score."""
+    sample_scores = [50.0, 60.0, 70.0, 80.0, 90.0, 95.0]
+    curve = {f"score_{int(s)}": platt_calibrator.calibrate_probability(s) for s in sample_scores}
+    return {
+        "sample_count": platt_calibrator.sample_count,
+        "param_a": platt_calibrator.param_a,
+        "param_b": platt_calibrator.param_b,
+        "brier_score": platt_calibrator.brier_score,
+        "brier_skill_score": platt_calibrator.brier_skill_score,
+        "calibrated_curve": curve,
+    }
+
+@app.post("/api/calibration/fit")
+def fit_calibration():
+    """Fit Platt scaling parameters from all closed trades in history."""
+    history = paper_trader._load_history()
+    return platt_calibrator.fit_from_trade_history(history)
 
 @app.get("/api/logs")
 def get_logs(limit: int = 100):
