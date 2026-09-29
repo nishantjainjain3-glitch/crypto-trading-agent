@@ -288,6 +288,26 @@ class CryptoExchangeClient:
             logger.error(f"Error fetching top volume pairs: {e}")
             return ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT"]
 
+    def sweep_dust_to_bnb(self) -> Dict[str, Any]:
+        """Automatically converts non-USDT, non-BNB small coin dust to BNB for fee discounts."""
+        if not self.exchange or not hasattr(self.exchange, "sapi_post_asset_dust_btc"):
+            return {"status": "SKIPPED", "converted": []}
+        try:
+            dust_info = self.exchange.sapi_post_asset_dust_btc()
+            details = dust_info.get("details", [])
+            assets_to_sweep = [
+                d["asset"] for d in details
+                if d.get("asset") not in ["USDT", "BNB"] and float(d.get("toBTC", 0)) > 0
+            ]
+            if not assets_to_sweep:
+                return {"status": "NO_DUST_TO_SWEEP", "converted": []}
+            res = self.exchange.sapi_post_asset_dust({"asset": assets_to_sweep})
+            logger.info(f"Automatically converted dust assets to BNB: {assets_to_sweep}")
+            return {"status": "SUCCESS", "converted": assets_to_sweep, "result": res}
+        except Exception as e:
+            logger.debug(f"Dust sweep skipped or error: {e}")
+            return {"status": "ERROR", "error": str(e)}
+
     def create_market_sell(self, symbol: str, amount: float) -> Dict[str, Any]:
         """Execute a market SELL order on Binance."""
         if not self.exchange:

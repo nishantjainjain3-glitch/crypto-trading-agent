@@ -108,6 +108,8 @@ class ContinuousCryptoRunner:
                     logger.info(f"Placing LIVE Binance Market Sell to close {trade['symbol']} for {formatted_qty}")
                     sell_order = self.client.create_market_sell(trade["symbol"], float(formatted_qty))
                     logger.info(f"Binance exit order filled! Order ID: {sell_order.get('id')}")
+                    # Auto-sweep fractional remainders to BNB to prevent dust accumulation
+                    self.client.sweep_dust_to_bnb()
                 except Exception as e:
                     logger.error(f"Failed to execute live exit on Binance for {trade['symbol']}: {e}")
 
